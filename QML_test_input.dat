@@ -1,0 +1,17 @@
+{"logepsilon": -1,
+ "alpha": 1.5,
+ "dt": 0.01,
+ "nProp": 10,
+ "nColl": 10,
+ "PCA_PREP": "False",
+ "PCA_MEAS": "False",
+ "PCA_dims": 2,
+ "delta_PCA": 1.5,
+ "gamma": 0.1,
+ "prob_thresh": 0,
+ "USE_MAX": "False",
+ "verbose": "True",
+ "datafile": "data/sphere_250.csv",
+ "H_test": "False",
+ "SHOW_EMBEDDING": "3d"
+}
