@@ -15,7 +15,7 @@ The QML code is executed on data encoded stored in a CSV file. Each row of the f
 The code is called with a input file that specifies all parameters, e.g.,
 
 ```
-qml_serial.py QML_test_input.data
+python3 qml_serial.py QML_test_input.data
 ```
 
 For an example input file and required parameters see `QML_test_input.dat`. Also, refer to psuedocode in Appendix VI of [arXiv:2112.11161](https://arxiv.org/abs/2112.11161) for interpretation of code and parameters.
