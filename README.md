@@ -10,7 +10,7 @@ The `QML` package only consists of one file qml_serial.py, which contains all fu
 
 ## Usage
 
-The QML code is executed on data encoded stored in a CSV file. Each row of the file is parsed as a datapoint.
+The QML code is executed on data stored in a CSV file. Each row of the file is parsed as a datapoint.
 The code is called with a input file that specifies all parameters, e.g.,
 
 ```
