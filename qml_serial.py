@@ -22,6 +22,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import igraph as ig
+import pandas as pd
+import h5py
 
 
 # ------------------------------------
@@ -141,6 +143,65 @@ def initialize(inp):
 
     return qml_params
 
+def read_in_matrix(datafile, verbose):
+    ext = os.path.splitext(datafile)[1]
+    print(ext)
+    if ext == ".csv":
+        data = np.genfromtxt(datafile, delimiter=',')
+    elif ext == ".pkl" or ext == ".pickle" or ext == "npy":
+        try:
+            data = np.load(datafile, allow_pickle=True)
+        except:
+            data = pd.read_pickle(datafile)
+            data = data.to_numpy()
+            print("panda")
+        # data = pd.read_pickle(datafile)
+    elif ext == ".hdf" or ext == ".h5":
+        # Broken for example file, may be too complicated
+        try:
+            data = pd.read_hdf(datafile).to_numpy()
+        except:
+            hf = h5py.File(datafile, 'r')
+            data = []
+            for i in hf.values():
+                data.append(i)
+            print(data)
+            data = np.array(data)
+    elif ext == ".sql":
+        data = pd.read_sql(datafile).to_numpy()
+    elif ext == ".xlsx":
+        data = pd.read_xlsx(datafile).to_numpy()
+    elif ext == ".json":
+        data = pd.read_json(datafile).to_numpy()
+    elif ext == ".html":
+        data = pd.read_html(datafile).to_numpy()
+    else:
+        print("Cannot parse data file: " + datafile + """. Supported file types
+        include .csv, .pickle, .pkl, .hdf, .h5, .sql, .xlsx, .json, and .html.""")
+        raise Exception("Unsupported data file")
+    print(data.shape)
+    print(len(data.shape))
+    print(type(data.dtype))
+    print(data)
+    if (len(data.shape) != 2):
+        print("Only data from tensors of dimension 2 are supported.")
+        raise Exception("Unsuppored data")
+    
+    nan_bools = np.isnan(data)
+    if (True in nan_bools):
+        if (verbose):
+            print("NaN found in input. Removing data points with issue.")
+        data = data[~np.isnan(data).any(axis=1), :]
+
+    complex_bools = np.iscomplex(data)
+    if (True in complex_bools):
+        if (verbose):
+            print("Method only take real values. Converting to real matrix.")
+        data = np.real(data)
+    
+    print(data)
+    return data
+    
 def PCA_for_ts(data, pt, no_dims):
     """
     Perform local PCA around a point to estimate tangent space
@@ -576,7 +637,8 @@ def run(qml_params):
 
     # load data
     try:
-        x = np.genfromtxt(qml_params['datafile'], delimiter=',')
+        # x = np.genfromtxt(qml_params['datafile'], delimiter=',')
+        x = read_in_matrix(qml_params['datafile'], verbose)
     except:
         print("Cannot open data file: " + qml_params['datafile'] + "... Exiting.")
         raise Exception("Cannot open data file")
@@ -849,6 +911,7 @@ if __name__ == '__main__':
 
         # run QML
         D = run(qml_params)
+        print(np.count_nonzero(D))
 
         # save geodesic distance matrix to file
         fname = "{}.out".format(sys.argv[1])
@@ -861,6 +924,7 @@ if __name__ == '__main__':
 
             lyout2d = g.layout_fruchterman_reingold()
             ax = fig.add_subplot(111)
+            ed = np.array(lyout2d.coords)
             ig.plot(g, layout=lyout2d, target=ax, edge_width=0)
             ax.axis('off')
             ax.set_title('2D embedding')
@@ -880,3 +944,17 @@ if __name__ == '__main__':
             ax.set_title('3D embedding')
 
             plt.show()
+
+        np.savetxt("{}.csv".format(sys.argv[1]), ed, delimiter=",")
+
+        # components = g.connected_components(mode='weak')
+        # fig, ax = plt.subplots()
+        # ig.plot(
+        #     components,
+        #     target=ax,
+        #     palette=ig.RainbowPalette(),
+        #     vertex_size=0.07,
+        #     vertex_color=list(map(int, ig.rescale(components.membership, (0, 200), clamp=True))),
+        #     edge_width=0.7
+        # )
+        # plt.show()
