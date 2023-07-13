@@ -19,30 +19,30 @@ import seaborn as sns
 import numpy as np
 import pandas as pd
 
-# datafile = "swiss.pickle"
-# try:
-#     data = np.load(datafile, allow_pickle=True)
-# except:
-#     data = pd.read_pickle(datafile)
-#     data = data.to_numpy()
-#     print("panda")
+datafile = "swiss.pickle"
+try:
+    data = np.load(datafile, allow_pickle=True)
+except:
+    data = pd.read_pickle(datafile)
+    data = data.to_numpy()
+    print("panda")
 
-# colorfile = "swissColored.pickle"
-# color = np.load(colorfile, allow_pickle=True)
+colorfile = "swissColored.pickle"
+color = np.load(colorfile, allow_pickle=True)
 
 
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split
-digits = load_digits()
-X_train, X_test, y_train, y_test = train_test_split(
-    digits.data, digits.target, stratify=digits.target, random_state=42
-)
-data = X_train
-color = y_train
-print(data)
-print(color)
-print(data.shape)
-print(color.shape)
+# from sklearn.datasets import load_digits
+# from sklearn.model_selection import train_test_split
+# digits = load_digits()
+# X_train, X_test, y_train, y_test = train_test_split(
+#     digits.data, digits.target, stratify=digits.target, random_state=42
+# )
+# data = X_train
+# color = y_train
+# print(data)
+# print(color)
+# print(data.shape)
+# print(color.shape)
 
 
 # UMAP
@@ -112,7 +112,7 @@ from pydiffmap import kernel as kr
 kernel = kr.Kernel(epsilon=0.5, k=10)
 kernel.fit(data)
 # kernel.compute(Y=data)
-dmap = dm.DiffusionMap(kernel_object=kernel, n_evecs=2, alpha=0.5)
+dmap = dm.DiffusionMap(kernel_object=kernel, n_evecs=3, alpha=0.5)
 embeded = dmap.fit_transform(data)
 # embeded = dmap.embedding_
 print(embeded)
@@ -124,7 +124,8 @@ plt.rcParams['figure.facecolor'] = 'white'
 
 fig = plt.figure(figsize=(8,6))
 
-plt.scatter(embeded[:, 0], embeded[:, 1], c=color, cmap="Spectral", s=10)
+# plt.scatter(embeded[:, 0], embeded[:, 1], c=color, cmap="Spectral", s=10)
+plt.scatter(embeded[:, 0], embeded[:, 1], embeded[:,2], c=color, cmap="Spectral", s=10)
 plt.title('Diffusion Map of mnist (pydiffmap)', size=16)
 plt.legend(loc='upper left', fontsize=18)
 plt.show()
