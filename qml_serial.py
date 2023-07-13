@@ -24,7 +24,9 @@ import matplotlib.cm as cm
 import igraph as ig
 import pandas as pd
 import h5py
+import scipy as sp
 
+np.set_printoptions(threshold=sys.maxsize)
 
 # ------------------------------------
 # Functions
@@ -175,14 +177,26 @@ def read_in_matrix(datafile, verbose):
         data = pd.read_json(datafile).to_numpy()
     elif ext == ".html":
         data = pd.read_html(datafile).to_numpy()
+    # elif ext == ".mat":
+    #     dict = sp.io.loadmat(datafile)
+    #     items = dict.items()
+    #     data = np.array(items)
+    #     print(".mat debug")
+    #     print(data.shape)
+    #     print(items)
+    #     # print(data)
+    # elif ext == ".mtx":
+    #     data = sp.io.mmread(datafile)
+    #     print("mtx")
+    #     print(data)
     else:
         print("Cannot parse data file: " + datafile + """. Supported file types
         include .csv, .pickle, .pkl, .hdf, .h5, .sql, .xlsx, .json, and .html.""")
         raise Exception("Unsupported data file")
-    print(data.shape)
-    print(len(data.shape))
-    print(type(data.dtype))
-    print(data)
+    # print(data.shape)
+    # print(len(data.shape))
+    # print(type(data.dtype))
+    # print(data)
     if (len(data.shape) != 2):
         print("Only data from tensors of dimension 2 are supported.")
         raise Exception("Unsuppored data")
@@ -432,6 +446,7 @@ def propagate(pt, qml_params, h, Npts, Us, x, k):
 
     # sort points according to Euclidean distance from starting point (pt)
     sorted_idx = np.squeeze(np.argsort(k[pt,]))
+    # print(pt, sorted_idx)
 
     # take the nColl closest points
     closest_pts = sorted_idx[1:nColl+1]
@@ -780,8 +795,8 @@ def perform_hamiltonian_test(qml_params):
     """
 
     # range of parameters to test over
-    logeps_v = np.arange(-5,0,0.1)
-    logh_v =  np.arange(-5,0,0.1)
+    logeps_v = np.arange(-10,10,1)
+    logh_v =  np.arange(-10,10,1)
     Neps = np.shape(logeps_v)[0]
 
     # number of states to evaluate expectation over
@@ -789,7 +804,8 @@ def perform_hamiltonian_test(qml_params):
 
     # load data
     try:
-        x = np.genfromtxt(qml_params['datafile'], delimiter=',')
+        # x = np.genfromtxt(qml_params['datafile'], delimiter=',')
+        x = read_in_matrix(qml_params['datafile'], qml_params['verbose'])
     except:
         print("Cannot open data file: " + qml_params['datafile'] + "... Exiting.")
         raise Exception("Cannot open data file")
