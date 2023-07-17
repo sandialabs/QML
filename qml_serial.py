@@ -150,7 +150,7 @@ def read_in_matrix(datafile, verbose):
     print(ext)
     if ext == ".csv":
         data = np.genfromtxt(datafile, delimiter=',')
-    elif ext == ".pkl" or ext == ".pickle" or ext == "npy":
+    elif ext == ".pkl" or ext == ".pickle" or ext == ".npy":
         try:
             data = np.load(datafile, allow_pickle=True)
         except:

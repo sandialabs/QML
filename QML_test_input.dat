@@ -1,8 +1,8 @@
-{"logepsilon": -2,
- "alpha": 1.5,
- "dt": 0.03,
- "nProp": 400,
- "nColl": 3,
+{"logepsilon": 5,
+ "alpha": 2,
+ "dt": 1,
+ "nProp": 100,
+ "nColl": 4,
  "PCA_PREP": "False",
  "PCA_MEAS": "False",
  "PCA_dims": 2,
@@ -11,7 +11,7 @@
  "prob_thresh": 0,
  "USE_MAX": "False",
  "verbose": "True",
- "datafile": "../swiss.pickle",
+ "datafile": "expirements/mnist.pickle",
  "H_test": "False",
  "SHOW_EMBEDDING": "3d"
 }
