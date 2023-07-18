@@ -135,6 +135,11 @@ def initialize(inp):
     else:
         qml_params['datafile'] = 'data.csv'
 
+    if 'colorfile' in inp:
+        qml_params['colorfile'] = inp['colorfile']
+    else:
+        qml_params['colorfile'] = False
+
     if 'H_test' in inp:
         if inp['H_test'].lower() in ['true', '1', 't']:
             qml_params['H_test'] = True
@@ -142,6 +147,11 @@ def initialize(inp):
             qml_params['H_test'] = False
     else:
         qml_params['H_test'] = False
+
+    if 'H_test_avg' in inp:
+        qml_params['H_test_avg'] = inp['H_test_avg']
+    else:
+        qml_params['H_test_avg'] = 20
 
     return qml_params
 
@@ -451,7 +461,7 @@ def propagate(pt, qml_params, h, Npts, Us, x, k):
     # take the nColl closest points
     closest_pts = sorted_idx[1:nColl+1]
 
-    for ki in range(nColl):
+    for ki in range(nColl): # serial TODO
         # for each of the nColl initial states, set the momentum to be a (normalized) vector from starting point (pt) to
         # one of the closest points to it
         p0 = x[closest_pts[ki],:] - x[pt,:]
@@ -482,6 +492,7 @@ def propagate(pt, qml_params, h, Npts, Us, x, k):
             for ki in range(nColl):
                 idx_store[pn,ki] = np.argmax(values[:,ki])
         else:
+            # TODO 
             ind, dist = pick_closest_to_mean(x, values, prob_thresh)
             idx_store[pn,:] = ind
 
@@ -800,7 +811,7 @@ def perform_hamiltonian_test(qml_params):
     Neps = np.shape(logeps_v)[0]
 
     # number of states to evaluate expectation over
-    avg = 30
+    avg = qml_params['H_test_avg']
 
     # load data
     try:
@@ -862,14 +873,12 @@ def perform_hamiltonian_test(qml_params):
 
         # plot
         loge, logh = np.meshgrid(logeps_v, logh_v)
-        fig = plt.figure(figsize=(6,6))
-        ax = fig.add_subplot(111, projection='3d')
+        fig, ax = plt.subplots()
+        im = ax.pcolormesh(loge, logh, devs)
+        fig.colorbar(im)
 
-        ax.plot_surface(loge, logh, np.log(devs+(1e-10)), cmap=cm.jet)
-
-        ax.set_xlabel('log(eps)')
-        ax.set_ylabel('log(h)')
-        ax.set_zlabel('log(deviation)')
+        ax.set_xlabel('log(h)')
+        ax.set_ylabel('log(eps)')
         ax.set_title('Deviation -- choose log(epsilon) and log(h) values')
 
         plt.show()
@@ -955,7 +964,17 @@ if __name__ == '__main__':
             lyout3d = g.layout_fruchterman_reingold_3d()
             ax = fig.add_subplot(111, projection='3d')
             ed = np.array(lyout3d.coords)
-            ax.scatter(ed[:,0], ed[:,1], ed[:,2])
+            # load color map
+            if qml_params['colorfile']!=False:
+                try:
+                    colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
+                except:
+                    print("Cannot open data file: " + qml_params['colorfile'] + "... Exiting.")
+                    raise Exception("Cannot open color file")
+                else:
+                    ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors)
+            else:
+                ax.scatter(ed[:,0], ed[:,1], ed[:,2])
             ax.axis('off')
             ax.set_title('3D embedding')
 

@@ -12,6 +12,8 @@
  "USE_MAX": "False",
  "verbose": "True",
  "datafile": "expirements/mnist.pickle",
+ "colorfile": "expirements/mnistColored.pickle",
  "H_test": "False",
+ "H_test_avg": "20",
  "SHOW_EMBEDDING": "3d"
 }
