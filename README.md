@@ -26,8 +26,6 @@ For an example input file and required parameters see `QML_test_input.dat`. Some
 * `nColl` : Number of initial momenta for geodesics. Each starting momentum start is a direction towards its "nColl" nearest neighbors. Increasing this parameter will start the propagation in more directions.
 * `H_test` : Boolean to autmatically tune error terms. The optimal values may not be the minimum found from this test, but it often close to the minimum.
 
-TODO something about the data, csv, ...
-
 The outputs of QML are:
     - Saves geodesic distance matrix to file "f.out", where "f" is the input file name
     - Optionally, also plots an embedding of the graph if SHOW_EMBEDDING = 2 or 3 (this number sets the embedding dimension) in the input file

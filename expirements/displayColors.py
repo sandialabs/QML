@@ -5,7 +5,7 @@ import sys
 np.set_printoptions(threshold=sys.maxsize)
 
 datafile = "../QML_test_input.dat.csv"
-colorfile = "treeDataColored.pickle"
+colorfile = "mnistColored.pickle"
 aMatfile = "../QML_test_input.dat.out"
 data = np.genfromtxt(datafile, delimiter=',')
 A = np.genfromtxt(aMatfile, delimiter=',')
@@ -36,6 +36,6 @@ print(maxDiff)
 fig = plt.figure(figsize=(8,6))
 # ax = fig.add_subplot(111)
 ax = fig.add_subplot(111,projection='3d')
-# ax.scatter(data[:,0], data[:,1], c=colors, cmap=plt.cm.Spectral)
-ax.scatter(data[:,0], data[:,1], data[:,2], c=colors, cmap=plt.cm.Spectral)
+ax.scatter(data[:,0], data[:,1], c=colors, cmap=plt.cm.Spectral)
+# ax.scatter(data[:,0], data[:,1], data[:,2], c=colors, cmap=plt.cm.Spectral)
 plt.show()
