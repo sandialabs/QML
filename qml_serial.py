@@ -26,7 +26,7 @@ import pandas as pd
 import h5py
 import scipy as sp
 
-np.set_printoptions(threshold=sys.maxsize)
+# np.set_printoptions(threshold=sys.maxsize)
 
 # ------------------------------------
 # Functions
@@ -207,7 +207,7 @@ def read_in_matrix(datafile, verbose):
     # print(len(data.shape))
     # print(type(data.dtype))
     # print(data)
-    if (len(data.shape) != 2):
+    if (len(data.shape) > 2):
         print("Only data from tensors of dimension 2 are supported.")
         raise Exception("Unsuppored data")
     
@@ -345,21 +345,13 @@ def pick_closest_to_mean(x, prob, thresh):
 
     ind = np.zeros(nc, dtype=np.uint)
     dist = np.zeros(nc)
+    indSec = np.arange(nc, dtype=np.uint)
 
-    if nc>1:
-        # if there's more than one distribution, loop over them and compute means for each
-        temp = np.transpose(x) @ prob
-
-        for jj in range(nc):
-            dists = spatial.distance.cdist(x, np.array([np.transpose(temp[:,jj])]))
-            ind[jj] = np.argmin(dists)
-            dist[jj] = dists[ind[jj]]
-
-    else:
-        mean_pos = np.transpose(x) @ prob
-        dists = spatial.distance.cdist(x, np.array([np.transpose(mean_pos)]))
-        ind = np.argmin(dists)
-        dist = dists[ind.astype(int)]
+    # find closest point for each ncol
+    temp = np.transpose(x) @ prob
+    dists = spatial.distance.cdist(x, np.transpose(temp))
+    ind = np.argmin(dists, axis=0)
+    dist = dists[ind,indSec]
 
     return ind, dist
 
@@ -445,6 +437,7 @@ def propagate(pt, qml_params, h, Npts, Us, x, k):
     # container to store the destination points after propagation
     # we do nColl propagations (each with a different momentum vector), for nProp time steps
     idx_store = np.zeros([nProp, nColl], dtype=int)
+    Idx_store = np.zeros([nProp, nColl], dtype=int)
 
     # if verbose, output progress
     if verbose:
@@ -461,17 +454,16 @@ def propagate(pt, qml_params, h, Npts, Us, x, k):
     # take the nColl closest points
     closest_pts = sorted_idx[1:nColl+1]
 
-    for ki in range(nColl): # serial TODO
-        # for each of the nColl initial states, set the momentum to be a (normalized) vector from starting point (pt) to
-        # one of the closest points to it
-        p0 = x[closest_pts[ki],:] - x[pt,:]
-        p0 = p0/np.linalg.norm(p0)
+    # for each of the nColl initial states, set the momentum to be a (normalized) vector from starting point (pt) to
+    # one of the closest points to it
+    p0 = x[closest_pts,:] - x[pt,:]
+    p0 = np.transpose(p0)/np.linalg.norm(p0, axis=1)
 
-        # coherent state elements
-        psi0_coll[:,ki] = np.multiply( np.exp( -k[:,pt]/(2*h) ), np.exp((-1j/h) * ((x - x[pt,:]) @ np.transpose(p0))) )
-
-        # normalize coherent state
-        psi0_coll[:,ki] = psi0_coll[:,ki] / np.linalg.norm(psi0_coll[:,ki])
+    # coherent state elements
+    psi0_coll = np.transpose(np.multiply(np.exp( -k[:,pt]/(2*h) ), np.transpose(np.exp((-1j/h) * ((x - x[pt,:]) @ p0)))))
+    
+    # normalize coherent state
+    psi0_coll = psi0_coll / np.linalg.norm(psi0_coll,axis=0)
 
     # propagate each of the initial states
     psi_coll = psi0_coll
@@ -481,18 +473,15 @@ def propagate(pt, qml_params, h, Npts, Us, x, k):
         psi_coll = Us @ psi_coll
 
         # normalize each state after propagation
-        for ki in range(nColl):
-            psi_coll[:,ki] = psi_coll[:,ki] / np.linalg.norm(psi_coll[:,ki])
+        psi_coll = psi_coll / np.linalg.norm(psi_coll, axis=0)
 
         # extract probabilites from propagated states
         values = np.abs(psi_coll)**2
 
         # for each of the nColl propagations, extract max (if USE_MAX is set) or mean position
         if USE_MAX:
-            for ki in range(nColl):
-                idx_store[pn,ki] = np.argmax(values[:,ki])
+            idx_store[pn,:] = np.argmax(values,axis=0)
         else:
-            # TODO 
             ind, dist = pick_closest_to_mean(x, values, prob_thresh)
             idx_store[pn,:] = ind
 
@@ -806,8 +795,8 @@ def perform_hamiltonian_test(qml_params):
     """
 
     # range of parameters to test over
-    logeps_v = np.arange(-10,10,1)
-    logh_v =  np.arange(-10,10,1)
+    logeps_v = np.arange(-10,-8,1)
+    logh_v =  np.arange(-10,-8,1)
     Neps = np.shape(logeps_v)[0]
 
     # number of states to evaluate expectation over
@@ -871,16 +860,26 @@ def perform_hamiltonian_test(qml_params):
                 # store deviation
                 devs[le_i, lh_i] = np.average(temp)
 
+        for i in range(devs.shape[0]):
+            for j in range(devs.shape[1]):
+                if (devs[i,j] > 1):
+                    devs[i,j] = 1
+
         # plot
-        loge, logh = np.meshgrid(logeps_v, logh_v)
+        loge, logh = np.meshgrid(logeps_v, logh_v, indexing='ij')
         fig, ax = plt.subplots()
+        print("loge", loge)
+        print("logh", logh)
+        print("devs", devs)
         im = ax.pcolormesh(loge, logh, devs)
+        # im = ax.pcolormesh(np.transpose(logh), np.transpose(loge), devs)
         fig.colorbar(im)
 
-        ax.set_xlabel('log(h)')
-        ax.set_ylabel('log(eps)')
+        ax.set_xlabel('log(eps)')
+        ax.set_ylabel('log(h)')
         ax.set_title('Deviation -- choose log(epsilon) and log(h) values')
 
+        plt.savefig('h_test.png')
         plt.show()
 
         retval = {}
@@ -967,12 +966,13 @@ if __name__ == '__main__':
             # load color map
             if qml_params['colorfile']!=False:
                 try:
-                    colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
+                    # colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
+                    colors = read_in_matrix(qml_params['colorfile'], qml_params['verbose'])
                 except:
                     print("Cannot open data file: " + qml_params['colorfile'] + "... Exiting.")
                     raise Exception("Cannot open color file")
                 else:
-                    ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors)
+                    ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral)
             else:
                 ax.scatter(ed[:,0], ed[:,1], ed[:,2])
             ax.axis('off')

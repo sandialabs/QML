@@ -89,8 +89,8 @@ except:
     data = data.to_numpy()
     print("panda")
 
-colorfile = "treeDataColored.pickle"
-color = np.load(colorfile, allow_pickle=True)
+# colorfile = "treeDataColored.pickle"
+# color = np.load(colorfile, allow_pickle=True)
 
 
 # from sklearn.datasets import load_digits
@@ -199,12 +199,12 @@ color = np.load(colorfile, allow_pickle=True)
 
 
 
-embeded, alphas = apply_diffusions(data)
-embeded = np.array(embeded)
-print(embeded)
-print(embeded.shape)
-print(embeded[:, 0].shape)
-plt.scatter(embeded[:, 0], embeded[:, 1], c=color, cmap="Spectral", s=10)
-plt.title('Diffusion Map', size=16)
-plt.legend(loc='upper left', fontsize=18)
-plt.show()
+# embeded, alphas = apply_diffusions(data)
+# embeded = np.array(embeded)
+# print(embeded)
+# print(embeded.shape)
+# print(embeded[:, 0].shape)
+# plt.scatter(embeded[:, 0], embeded[:, 1], c=color, cmap="Spectral", s=10)
+# plt.title('Diffusion Map', size=16)
+# plt.legend(loc='upper left', fontsize=18)
+# plt.show()

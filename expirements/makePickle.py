@@ -132,25 +132,36 @@ def read_mnist_labels(filename):
 
 
 # fashion mnist
-# # import tensorflow as tf
-# # from keras.datasets import fashion_mnist
+# import tensorflow as tf
+# from keras.datasets import fashion_mnist
+
+# Load the Fashion MNIST dataset
+# (x_train, y_train), _ = tf.keras.datasets.fashion_mnist.load_data()
+# (x_train, y_train) = tf.datasets.image_classification.FashionMNIST
+# (x_train, y_train), (testX, testy) = fashion_mnist.load_data()
+# tf.keras.datasets.fashion_mnist.load_data()
+
+dataFile = "/Users/pnooste/Documents/extra/data/fashion-mnist/data/fashion/" + "train-images-idx3-ubyte.gz"
+labelFile = "/Users/pnooste/Documents/extra/data/fashion-mnist/data/fashion/" + "train-labels-idx1-ubyte.gz"
+
+x_train = read_mnist_images(dataFile)
+y_train = read_mnist_labels(labelFile)
+
+print(x_train.shape)
+print(x_train)
+print(y_train.shape)
+print(y_train)
+
+# Select 1000 random samples
+random_indices = np.random.choice(len(x_train), size=60000, replace=False)
+x_samples = x_train[random_indices]
+y_samples = y_train[random_indices]
+
+# Reshape the images to 1D arrays
+x_samples = x_samples.reshape(-1, 28 * 28)
 
 # # Load the Fashion MNIST dataset
-# # (x_train, y_train), _ = tf.keras.datasets.fashion_mnist.load_data()
-# # (x_train, y_train) = tf.datasets.image_classification.FashionMNIST
-# # (x_train, y_train), (testX, testy) = fashion_mnist.load_data()
-# # tf.keras.datasets.fashion_mnist.load_data()
-
-# dataFile = "/Users/pnooste/Documents/extra/data/fashion-mnist/data/fashion/" + "train-images-idx3-ubyte.gz"
-# labelFile = "/Users/pnooste/Documents/extra/data/fashion-mnist/data/fashion/" + "train-labels-idx1-ubyte.gz"
-
-# x_train = read_mnist_images(dataFile)
-# y_train = read_mnist_labels(labelFile)
-
-# print(x_train.shape)
-# print(x_train)
-# print(y_train.shape)
-# print(y_train)
+# (x_train, y_train), _ = np.load('fashion_mnist.npy', allow_pickle=True)
 
 # # Select 1000 random samples
 # random_indices = np.random.choice(len(x_train), size=1000, replace=False)
@@ -160,59 +171,48 @@ def read_mnist_labels(filename):
 # # Reshape the images to 1D arrays
 # x_samples = x_samples.reshape(-1, 28 * 28)
 
-# # # Load the Fashion MNIST dataset
-# # (x_train, y_train), _ = np.load('fashion_mnist.npy', allow_pickle=True)
+# # Write samples to file
+# with open('fashion_mnist_samples.txt', 'w') as file:
+#     for i in range(len(x_samples)):
+#         image = x_samples[i]
+#         label = y_samples[i]
+#         file.write(f'Label: {label}\n')
+#         file.write(','.join(str(pix) for pix in image) + '\n')
+#         file.write('\n')
+print(x_samples.shape)
+print(x_samples)
+print(y_samples.shape)
+print(y_samples)
+x_samples = x_samples / 255
 
-# # # Select 1000 random samples
-# # random_indices = np.random.choice(len(x_train), size=1000, replace=False)
-# # x_samples = x_train[random_indices]
-# # y_samples = y_train[random_indices]
-
-# # # Reshape the images to 1D arrays
-# # x_samples = x_samples.reshape(-1, 28 * 28)
-
-# # # Write samples to file
-# # with open('fashion_mnist_samples.txt', 'w') as file:
-# #     for i in range(len(x_samples)):
-# #         image = x_samples[i]
-# #         label = y_samples[i]
-# #         file.write(f'Label: {label}\n')
-# #         file.write(','.join(str(pix) for pix in image) + '\n')
-# #         file.write('\n')
-# print(x_samples.shape)
-# print(x_samples)
-# print(y_samples.shape)
-# print(y_samples)
-# x_samples = x_samples / 255
-
-# filename = 'fnist.pickle'
-# with open(filename, 'wb') as file:
-#     pickle.dump(x_samples,file)
-# filename = 'fnistColored.pickle'
-# with open(filename, 'wb') as file:
-#     pickle.dump(y_samples,file)
-
-
-
-
-# biology data
-datafile = "/Users/pnooste/Documents/extra/data/PHATE/data/TreeData.mat"
-
-dict = sp.io.loadmat(datafile)
-# items = dict.items()
-# data = np.array(items)
-data = dict["M"]
-colors = dict["C"]
-print(".mat debug")
-print(data.shape)
-print(colors.shape)
-print(dict["C"])
-print(dict["M"])
-# print(data)
-
-filename = 'treeData.pickle'
+filename = 'fullNist.pickle'
 with open(filename, 'wb') as file:
-    pickle.dump(data,file)
-filename = 'treeDataColored.pickle'
+    pickle.dump(x_samples,file)
+filename = 'fullNistColored.pickle'
 with open(filename, 'wb') as file:
-    pickle.dump(colors,file)
+    pickle.dump(y_samples,file)
+
+
+
+
+# # biology data
+# datafile = "/Users/pnooste/Documents/extra/data/PHATE/data/TreeData.mat"
+
+# dict = sp.io.loadmat(datafile)
+# # items = dict.items()
+# # data = np.array(items)
+# data = dict["M"]
+# colors = dict["C"]
+# print(".mat debug")
+# print(data.shape)
+# print(colors.shape)
+# print(dict["C"])
+# print(dict["M"])
+# # print(data)
+
+# filename = 'treeData.pickle'
+# with open(filename, 'wb') as file:
+#     pickle.dump(data,file)
+# filename = 'treeDataColored.pickle'
+# with open(filename, 'wb') as file:
+#     pickle.dump(colors,file)
