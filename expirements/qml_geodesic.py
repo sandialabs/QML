@@ -819,23 +819,45 @@ def run(qml_params):
 
 
         # Djikstra distances
-        k = 6
-        # Create an empty graph
-        G = nx.Graph()
-        # Loop over the initial matrix
+        k = 100
+        graphList = []
+        closest_points = []
         for i, point in enumerate(x):
-            closest_points = find_closest_points(x, point, k)
-            for index, distance in closest_points:
-                # print(index, distance, i)
-                G.add_edge(i, index, weight=distance)
+            closest_points.append(find_closest_points(x, point, k))
+        # Create an empty graph
+        for j in range(5,k):
+            print("g ", j)
+            G = nx.Graph()
+            # Loop over the initial matrix
+            for i, point in enumerate(x):
+                count0 = 0
+                for index, distance in closest_points[i]:
+                    if (count0 < j):
+                        # print(index, distance, i)
+                        G.add_edge(i, index, weight=distance)
+                        count0 += 1
+                    else:
+                        break
+            graphList.append(G)
         # print(G)
         # print(ids)
         # print(G.edges())
         # print(max(nx.connected_components(G),key=len))
-        for i in range(count):
-            shortest_path_indices = nx.shortest_path(G, source=0, target=ids[i,0])
-            distances[i,3] = sum(G[u][v]['weight'] for u, v in zip(shortest_path_indices, shortest_path_indices[1:]))
-
+        dijDists = np.zeros((count,k-5))
+        dijError = np.zeros((k-5,1))
+        for j in range(0,k-5):
+            print("p ", j)
+            for i in range(count):
+                try:
+                    shortest_path_indices = nx.shortest_path(graphList[j], source=0, target=ids[i,0])
+                    dijDists[i,j] = sum(graphList[j][u][v]['weight'] for u, v in zip(shortest_path_indices, shortest_path_indices[1:]))
+                except:
+                    dijDists[i,j] = 9999999999999
+            dijError[j] = np.linalg.norm(dijDists[:,j] - distances[:,1])
+        dijBestK = np.argmin(dijError)
+        print("dif error ", dijError)
+        print("best k ", dijBestK)
+        distances[:,3] = dijDists[:,dijBestK]
         return ids, distances, xScale
 
 def get_hamiltonian(k, epsilon):

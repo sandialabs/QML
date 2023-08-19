@@ -4,9 +4,9 @@ import sys
 
 np.set_printoptions(threshold=sys.maxsize)
 
-datafile = "../QML_test_input.dat.csv"
-colorfile = "mnistColored.pickle"
-aMatfile = "../QML_test_input.dat.out"
+datafile = "QML_test_input.dat.csv"
+colorfile = "data/swiss2000Colored.pickle"
+aMatfile = "QML_test_input.dat.out"
 data = np.genfromtxt(datafile, delimiter=',')
 A = np.genfromtxt(aMatfile, delimiter=',')
 colors = np.load(colorfile, allow_pickle=True)
