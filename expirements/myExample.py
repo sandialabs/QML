@@ -107,6 +107,12 @@ color = np.load(colorfile, allow_pickle=True)
 # print(color.shape)
 
 
+# plot from HD graph embedding
+embedFile = "../../../phd/embedP1.bin"
+embed = np.fromfile(embedFile, dtype=np.double)
+plt.scatter(embed[:, 0], embed[:, 1], c=color, cmap="Spectral", s=10)
+plt.title("UMAP", fontsize=18)
+
 # UMAP
 sns.set(context="paper", style="white")
 
