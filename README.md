@@ -38,6 +38,14 @@ For development purposes, the package can be obtained by cloning the repository 
 git clone https://github.com/sandialabs/QML.git
 ```
 
+## Geodesic method comparison
+
+Quantum Manifold Learning (QML) computes geodesics using a diffusion process derived from quantum dynamics. The accuracy of the geodesics scales with the amount of data in the input. QML scales to higher-dimensional data more efficiently than common geodesic methods. When applied to samplings of the sphere, geodesics are recovered with similar accuracy to the heat method. Both methods outperform distances obtained from using Dijkstra's method on a nearest neighbor graph of degree 6.
+
+<p align="center">
+    <img src="images/geoCompareFull.PNG" alt="drawing" style="width:500px;"/>
+</p>
+
 ## Citation
 
 If you use or refer to this project in any publication, please cite the corresponding paper:
