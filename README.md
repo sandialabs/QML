@@ -38,16 +38,29 @@ For development purposes, the package can be obtained by cloning the repository 
 git clone https://github.com/sandialabs/QML.git
 ```
 
+## Manfold learning comparison
+For the [swissroll data set](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_swiss_roll.html) of 2000 points QML out performs other manifold learning techniques when [2](#citations) is used for graph embedding. QML works by 
+UMAP, local graph approximation, graph embedding optimization
+Tsne, idk
+others, graph laplacian i think
+
+
+<p align="center">
+    <img src="images/MLcompareFull.PNG" alt="drawing" style="width:600px;"/>
+</p>
+
 ## Geodesic method comparison
 
 Quantum Manifold Learning (QML) computes geodesics using a diffusion process derived from quantum dynamics. The accuracy of the geodesics scales with the amount of data in the input. QML scales to higher-dimensional data more efficiently than common geodesic methods. When applied to samplings of the sphere, geodesics are recovered with similar accuracy to the heat method. Both methods outperform distances obtained from using Dijkstra's method on a nearest neighbor graph of degree 6.
 
 <p align="center">
-    <img src="images/geoCompareFull.PNG" alt="drawing" style="width:500px;"/>
+    <img src="images/geoCompareFull.PNG" alt="drawing" style="width:600px;"/>
 </p>
 
-## Citation
+## Citations
 
 If you use or refer to this project in any publication, please cite the corresponding paper:
 
 > Akshat Kumar, Mohan Sarovar. _Manifold learning via quantum dynamics._ [arXiv:2112.11161](https://arxiv.org/abs/2112.11161) (2022).
+
+> Peter Oostema, Franz Franchetti. _Leveraging High Dimensional Spatial Graph Embedding as a Heuristic for Graph Algorithms._ [ieeexplore.ieee.org](https://spiral.ece.cmu.edu/pub-spiral/pubfile/PDCO2021_338.pdf) (2021).

@@ -109,9 +109,15 @@ color = np.load(colorfile, allow_pickle=True)
 
 # plot from HD graph embedding
 embedFile = "../../../phd/embedP1.bin"
-embed = np.fromfile(embedFile, dtype=np.double)
+embed = np.fromfile(embedFile, dtype=np.double).reshape((2000,1999))
+print(embed)
+print(embed.shape)
+fig, ax = plt.subplots(figsize=(8, 7))
 plt.scatter(embed[:, 0], embed[:, 1], c=color, cmap="Spectral", s=10)
-plt.title("UMAP", fontsize=18)
+plt.title("QML", fontsize=18)
+plt.xticks([])
+plt.yticks([])
+plt.show()
 
 # UMAP
 sns.set(context="paper", style="white")
@@ -121,12 +127,14 @@ sns.set(context="paper", style="white")
 reducer = umap.UMAP(random_state=42)
 embedding = reducer.fit_transform(data)
 
-fig, ax = plt.subplots(figsize=(8, 6))
+fig, ax = plt.subplots(figsize=(8, 7))
 # color = mnist.target.astype(int)
 plt.scatter(embedding[:, 0], embedding[:, 1], c=color, cmap="Spectral", s=10)
-plt.setp(ax, xticks=[], yticks=[])
+# plt.setp(ax, xticks=[], yticks=[])
 plt.title("UMAP", fontsize=18)
-
+# plt.axis('off')
+plt.xticks([])
+plt.yticks([])
 plt.show()
 
 
@@ -142,11 +150,14 @@ print(proj)
 plt.style.use('default')
 plt.rcParams['figure.facecolor'] = 'white'
 
-fig = plt.figure(figsize=(8,6))
+fig = plt.figure(figsize=(8,7))
 
 plt.scatter(proj[:, 0], proj[:, 1], c=color, cmap="Spectral", s=10)
 plt.title('Laplacian Eigenmap', size=16)
-plt.legend(loc='upper left', fontsize=18)
+# plt.legend(loc='upper left', fontsize=18)
+# plt.axis('off')
+plt.xticks([])
+plt.yticks([])
 plt.show()
 
 
@@ -163,11 +174,14 @@ print(X_embedded.shape)
 plt.style.use('default')
 plt.rcParams['figure.facecolor'] = 'white'
 
-fig = plt.figure(figsize=(8,6))
+fig = plt.figure(figsize=(8,7))
 
 plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=color, cmap="Spectral", s=10)
 plt.title('T-SNE', size=16)
-plt.legend(loc='upper left', fontsize=18)
+# plt.legend(loc='upper left', fontsize=18)
+# plt.axis('off')
+plt.xticks([])
+plt.yticks([])
 plt.show()
 
 
@@ -201,7 +215,9 @@ print(embeded[:, 0].shape)
 plt.scatter(embeded[:, 0], embeded[:, 1], c=color, cmap="Spectral", s=10)
 # plt.scatter(embeded[:, 0], embeded[:, 1], embeded[:,2], s=sizes, c=color, cmap="Spectral")
 plt.title('Diffusion Map', size=16)
-plt.legend(loc='upper left', fontsize=18)
+# plt.legend(loc='upper left', fontsize=18)
+plt.xticks([])
+plt.yticks([])
 plt.show()
 
 # embeded, alphas = apply_diffusions(data)
