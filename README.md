@@ -39,10 +39,14 @@ git clone https://github.com/sandialabs/QML.git
 ```
 
 ## Manfold learning comparison
-For the [swissroll data set](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_swiss_roll.html) of 2000 points QML out performs other manifold learning techniques when [2](#citations) is used for graph embedding. QML works by 
-UMAP, local graph approximation, graph embedding optimization
-Tsne, idk
-others, graph laplacian i think
+For the [Swissroll dataset](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_swiss_roll.html) of 2000 points, QML outperforms other manifold learning techniques when [2](#citations) is used for graph embedding. QML works by approximating the Hamiltonian dynamics of the dataset. Using this diffusion process, a wavepacket can be propagated to find the geodesic distance between points. This creates a local graph of the data that can be embedded, giving a low-dimensional representation. Other methods function similarly. UMAP constructs a local graph and optimizes graph embedding. Laplacian eigenmaps and diffusion maps find low-dimensional representations from the eigenvectors of local distance graphs obtained by Euclidean distance or a diffusion process, respectively.
+UMAP, local graph approximation, graph embedding optimization. t-SNE works by finding probabilistic similarities between points and finds a representation that minimizes the divergence of the found probability distributions.  
+<!---
+For the [swissroll data set](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_swiss_roll.html) of 2000 points QML out performs other manifold learning techniques when [2](#citations) is used for graph embedding. QML works by approximating the Halmintonian dynamics of the dataset. Using this diffusion process a wavepacket can be propagated to find the geodesic distance between points. This creates a local graph of the data that can be embedded giving a low dimensional representation. Other methods function similarly. UMAP constructs a local graph and optimizes a graph embedding. Laplacian eigenmaps and diffusion maps find low dimensional representations from the eigenvectors of local distance graphs obtained by euclidean distance or a diffusion process respectivly.
+UMAP, local graph approximation, graph embedding optimization. T-SNE works by finding probablistic similaries between points and finds a representation that minimized the divergence of the found probability distributions.  -->
+  
+<!--- On the swiss roll of 2000 uniformly sampled points QML, UMAP, Laplacian eigenmaps, and diffusion maps all manage to unroll the data onto a 2D manifold. QML and UMAP retain information along the dimension of initally flat dimension of the data. While only QML mantains a uniform distirbution of the data and manages to straighten swiss roll, while all others are curved.-->
+On the Swiss roll with 2000 uniformly sampled points, QML, UMAP, Laplacian eigenmaps, and diffusion maps all succeed in unrolling the data onto a 2D manifold. QML and UMAP retain information along the initially flat dimension of the data. However, only QML maintains a uniform distribution of the data and manages to straighten the Swiss roll, while all the others result in a curved representation.
 
 
 <p align="center">
@@ -51,7 +55,13 @@ others, graph laplacian i think
 
 ## Geodesic method comparison
 
-Quantum Manifold Learning (QML) computes geodesics using a diffusion process derived from quantum dynamics. The accuracy of the geodesics scales with the amount of data in the input. QML scales to higher-dimensional data more efficiently than common geodesic methods. When applied to samplings of the sphere, geodesics are recovered with similar accuracy to the heat method. Both methods outperform distances obtained from using Dijkstra's method on a nearest neighbor graph of degree 6.
+<!--- Quantum Manifold Learning (QML) computes geodesics using a diffusion process derived from quantum dynamics. The accuracy of the geodesics scales with the amount of data in the input. QML scales to higher-dimensional data more efficiently than common geodesic methods. Others methods compared agianst here are the heat method [3](#citations) and shortest paths on local graphs. The heat method works by solving the heat equation on the data set and scaling the output to match a distance metric. Djikstra's algorithm can also be used on a neirest neighbors graph of euclidean distances to approximate geodesic distance. 
+   
+When applied to samplings of the sphere, geodesics are recovered with similar accuracy to the heat method. Both methods outperform distances obtained from using Dijkstra's method on a nearest neighbor graph of degree 6. Additionally QML can output a geodesic path show on the top of the figure. This is constructed from propagating for multiple time steps and plotting the position along the way. -->
+
+Quantum Manifold Learning (QML) computes geodesics using a diffusion process derived from quantum dynamics. The accuracy of the geodesics scales with the amount of data in the input. QML scales to higher-dimensional data more efficiently than common geodesic methods. Other methods compared here are the heat method [3](#citations) and shortest paths on local graphs. The heat method works by solving the heat equation on the dataset and scaling the output to match a distance metric. Dijkstra's algorithm can also be used on a nearest neighbors graph of Euclidean distances to approximate geodesic distance.
+
+When applied to samplings of the sphere, geodesics are recovered with similar accuracy to the heat method. Both methods outperform distances obtained from using Dijkstra's method on a nearest neighbor graph of degree 6. Additionally, QML can output a geodesic path shown on top of the figure. This is constructed by propagating for multiple time steps and plotting the position along the way
 
 <p align="center">
     <img src="images/geoCompareFull.PNG" alt="drawing" style="width:600px;"/>
@@ -61,6 +71,8 @@ Quantum Manifold Learning (QML) computes geodesics using a diffusion process der
 
 If you use or refer to this project in any publication, please cite the corresponding paper:
 
-> Akshat Kumar, Mohan Sarovar. _Manifold learning via quantum dynamics._ [arXiv:2112.11161](https://arxiv.org/abs/2112.11161) (2022).
+> 1. Akshat Kumar, Mohan Sarovar. _Manifold learning via quantum dynamics._ [arXiv:2112.11161](https://arxiv.org/abs/2112.11161) (2022).
 
-> Peter Oostema, Franz Franchetti. _Leveraging High Dimensional Spatial Graph Embedding as a Heuristic for Graph Algorithms._ [ieeexplore.ieee.org](https://spiral.ece.cmu.edu/pub-spiral/pubfile/PDCO2021_338.pdf) (2021).
+> 2. Peter Oostema, Franz Franchetti. _Leveraging High Dimensional Spatial Graph Embedding as a Heuristic for Graph Algorithms._ [ieeexplore.ieee.org](https://spiral.ece.cmu.edu/pub-spiral/pubfile/PDCO2021_338.pdf) (2021).
+
+> 3. Keenan Crane, Clarisse Weischedel, Max Wardetzky. _The Heat Method for Distance Computation_ [ACM](https://www.cs.cmu.edu/~kmcrane/Projects/HeatMethod/paperCACM.pdf)
