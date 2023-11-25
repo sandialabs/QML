@@ -18,7 +18,6 @@ import numpy as np
 import scipy.spatial as spatial
 from scipy.sparse.linalg import inv as spinv
 import scipy as sp
-from mpl_toolkits import mplot3d
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -357,7 +356,7 @@ def pick_closest_to_mean(x, prob, thresh):
     ind = np.argmin(dists, axis=0)
     dist = dists[ind,indSec]
 
-    return ind, dist, temp
+    return ind, dist
 
 def pick_closest_to_mean_pca(pt, k, x, delta_PCA, PCA_map, prob, thresh):
     """
@@ -443,8 +442,6 @@ def propagate(pt, qml_params, h, Npts, Us, x, k):
     idx_store = np.zeros([nProp, nColl], dtype=int)
     Idx_store = np.zeros([nProp, nColl], dtype=int)
     dist_store = np.zeros([nProp, nColl], dtype=float)
-    pos_store = np.zeros((nProp, x.shape[1]), dtype=float)
-    # print("x shape ", x.shape)
 
     # if verbose, output progress
     if verbose:
@@ -489,13 +486,11 @@ def propagate(pt, qml_params, h, Npts, Us, x, k):
         if USE_MAX:
             idx_store[pn,:] = np.argmax(values,axis=0)
         else:
-            ind, dist, pos = pick_closest_to_mean(x, values, prob_thresh)
+            ind, dist = pick_closest_to_mean(x, values, prob_thresh)
             idx_store[pn,:] = ind
             dist_store[pn,:] = dist
-            pos_store[pn,:] = pos.reshape(3,)
 
-
-    return idx_store, dist_store, pos_store
+    return idx_store, dist_store
 
 def propagate_PCA(pt, qml_params, h, Npts, Us, PCA_map, x, k):
     """
@@ -744,15 +739,7 @@ def run(qml_params):
             peak_idxs, dist_idxs = propagate_PCA(pt, qml_params, h, Npts, Us, PCA_map, x, k)
         else:
             pt = 0
-            peak_idxs, dist_idxs, pos_store = propagate(pt, qml_params, h, Npts, Us, x, k)
-
-        print("x ", x)
-        ax = plt.axes(projection ="3d")
-        ax.scatter(x[:,0], x[:,1], x[:,2], s=0.1)
-        ax.scatter(x[peak_idxs,0], x[peak_idxs,1], x[peak_idxs,2], c='red', s=0.5)
-        ax.plot(pos_store[:,0], pos_store[:,1], pos_store[:,2], c='orange')
-        ax.axis('off')
-        plt.show()
+            peak_idxs, dist_idxs = propagate(pt, qml_params, h, Npts, Us, x, k)
 
 
 # Fill in geodesic distance matrix
@@ -810,7 +797,6 @@ def run(qml_params):
         lineData = np.zeros((count,3))
         r0, theta0, phi0 = cartesian_to_spherical(x[0,0], x[0,1], x[0,2])
         for i in range(count):
-            print("D ", ids[i,0], "value ", D[0, ids[i,0]])
             distances[i,0] = D[0, ids[i,0]]
             lineData[i,:] = x[ids[i,0], :]
             r, theta, phi = cartesian_to_spherical(lineData[i,0], lineData[i,1], lineData[i,2])
@@ -1105,7 +1091,6 @@ if __name__ == '__main__':
         print("ids", ids)
         print("dist", distances)
         print("xScale", xScale)
-
         
 
         # # save geodesic distance matrix to file
