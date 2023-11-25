@@ -20,15 +20,11 @@ from scipy.sparse.linalg import inv as spinv
 import scipy as sp
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-import matplotlib
-from matplotlib.colors import ListedColormap
-from matplotlib import cm
 import matplotlib.cm as cm
 import igraph as ig
 import pandas as pd
 import h5py
 import scipy as sp
-from sklearn.metrics import silhouette_score
 
 # np.set_printoptions(threshold=sys.maxsize)
 
@@ -144,11 +140,6 @@ def initialize(inp):
     else:
         qml_params['colorfile'] = False
 
-    if 'labelfile' in inp:
-        qml_params['labelfile'] = inp['labelfile']
-    else:
-        qml_params['labelfile'] = False
-
     if 'H_test' in inp:
         if inp['H_test'].lower() in ['true', '1', 't']:
             qml_params['H_test'] = True
@@ -166,7 +157,7 @@ def initialize(inp):
 
 def read_in_matrix(datafile, verbose):
     ext = os.path.splitext(datafile)[1]
-    # print(ext)
+    print(ext)
     if ext == ".csv":
         data = np.genfromtxt(datafile, delimiter=',')
     elif ext == ".pkl" or ext == ".pickle" or ext == ".npy":
@@ -292,7 +283,8 @@ def qmaniGetU_nnGL( k, dt, epsilon, verbose=0, trunc=0 ):
     if verbose>0:
         print("Construct graph Laplacian")
 
-    L = np.exp( np.divide(k, -epsilon) )
+    epsForDisconnect = 0.0000000000001
+    L = np.exp( np.divide(k, -epsilon) ) + epsForDisconnect
     # normalization
     D = np.matrix(L).sum(1)
     one_over_D = sp.sparse.diags(1/np.squeeze(np.asarray(D)), format="csc")
@@ -435,6 +427,7 @@ def propagate(pt, qml_params, h, Npts, Us, x, k):
     Outputs:
         idx_store: (nProp x nColl) matrix that contains destination points for each propagation step (nProp) and each propagation direction (nColl)
     """
+
 
     # extract parameters
     verbose = qml_params['verbose']
@@ -670,8 +663,14 @@ def run(qml_params):
         # Npts is the number of data points
         Npts = np.shape(x)[0]
 
+        for i in range(Npts):
+            for j in range(Npts):
+                if (np.isfinite(x[i,j])):
+                    x[i,j] = 1 - x[i,j]
+                    print(x[i,j])
         # compute Euclidean squared distance matrix
-        k = spatial.distance.squareform(spatial.distance.pdist(x, 'sqeuclidean'))
+        # k = spatial.distance.squareform(spatial.distance.pdist(x, 'sqeuclidean'))
+        k = x
 
 #PCA
         PCA = PCA_PREP | PCA_MEAS
@@ -724,9 +723,37 @@ def run(qml_params):
 
 # QPROP
         # compute quantum propagator
-        Udt, D_normalizer = qmaniGetU_nnGL( k, dt, epsilon, verbose, trunc=0 )
+        Udt, D_normalizer = qmaniGetU_nnGL( x, dt, epsilon, verbose, trunc=0 )
         D_normalizer_inv = spinv(D_normalizer)
         Us = D_normalizer @ Udt @ (D_normalizer_inv)
+
+# approx spatial representation of graph
+        # compute Euclidean squared distance matrix
+        g = ig.Graph.Weighted_Adjacency(np.where(np.isfinite(x), x, 0))
+        fig = plt.figure(figsize=(6,6))
+        lyout3d = g.layout_fruchterman_reingold_3d()
+        ax = fig.add_subplot(111, projection='3d')
+        ed = np.array(lyout3d.coords)
+        # load color map
+        if qml_params['colorfile']!=False:
+            try:
+                # colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
+                print(qml_params['colorfile'])
+                colors = read_in_matrix(qml_params['colorfile'], qml_params['verbose'])
+            except:
+                print("Cannot open data file: " + qml_params['colorfile'] + "... Exiting.")
+                raise Exception("Cannot open color file")
+            else:
+                ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral)
+        else:
+            ax.scatter(ed[:,0], ed[:,1], ed[:,2])
+        ax.axis('off')
+        ax.set_title('3D embedding')
+        print("edge count:", np.count_nonzero(np.isfinite(x)))
+        plt.show()
+        print("3d layout: ", ed)
+        k = spatial.distance.squareform(spatial.distance.pdist(ed, 'sqeuclidean'))
+        x = ed
 
 # Propagate
         # container to store destination points after propagation
@@ -775,8 +802,8 @@ def get_hamiltonian(k, epsilon):
     Outputs:
         H: data-driven Hamiltonian
     """
-
-    L = np.exp( np.divide(k, -epsilon) )
+    epsForDisconnect = 0.0000000000001
+    L = np.exp( np.divide(k, -epsilon) ) + epsForDisconnect
 
     # normalization
     D = np.matrix(L).sum(1)
@@ -804,8 +831,8 @@ def perform_hamiltonian_test(qml_params):
     """
 
     # range of parameters to test over
-    logeps_v = np.arange(-10,6,0.5)
-    logh_v =  np.arange(-10,6,0.5)
+    logeps_v = np.arange(-30,-20,0.5)
+    logh_v =  np.arange(-20,-10,0.5)
     Neps = np.shape(logeps_v)[0]
 
     # number of states to evaluate expectation over
@@ -823,7 +850,30 @@ def perform_hamiltonian_test(qml_params):
         Npts = np.shape(x)[0]
 
         # compute Euclidean squared distance matrix
-        k = spatial.distance.squareform(spatial.distance.pdist(x, 'sqeuclidean'))
+        g = ig.Graph.Weighted_Adjacency(np.where(np.isfinite(x), x, 0))
+        fig = plt.figure(figsize=(6,6))
+        lyout3d = g.layout_fruchterman_reingold_3d()
+        ax = fig.add_subplot(111, projection='3d')
+        ed = np.array(lyout3d.coords)
+        # load color map
+        if qml_params['colorfile']!=False:
+            try:
+                # colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
+                print(qml_params['colorfile'])
+                colors = read_in_matrix(qml_params['colorfile'], qml_params['verbose'])
+            except:
+                print("Cannot open data file: " + qml_params['colorfile'] + "... Exiting.")
+                raise Exception("Cannot open color file")
+            else:
+                ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral)
+        else:
+            ax.scatter(ed[:,0], ed[:,1], ed[:,2])
+        ax.axis('off')
+        ax.set_title('3D embedding')
+        print("edge count:", np.count_nonzero(np.isfinite(x)))
+        plt.show()
+        print("3d layout: ", ed)
+        k = spatial.distance.squareform(spatial.distance.pdist(ed, 'sqeuclidean'))
 
         # container for storing devitations/errors
         devs = np.zeros([len(logeps_v), len(logh_v)])
@@ -840,7 +890,7 @@ def perform_hamiltonian_test(qml_params):
             epsilon = np.exp(le)
 
             # calculate Hamiltonian
-            H = get_hamiltonian(k, epsilon)
+            H = get_hamiltonian(x, epsilon) # graph x
 
             # loop over h
             for lh_i, lh in enumerate(logh_v):
@@ -856,11 +906,11 @@ def perform_hamiltonian_test(qml_params):
                     sorted_idx = np.squeeze(np.argsort(k[pt,]))
 
                     # pick momentum as (normalized) vector to closest point
-                    p0 = x[sorted_idx[1],:] - x[pt,:]
+                    p0 = ed[sorted_idx[1],:] - ed[pt,:]
                     p0 = p0/np.linalg.norm(p0)
 
                     # formulate coherent state (in extrinsic coordinates)
-                    psi0 = np.multiply( np.exp( -k[:,pt]/(2*h) ), np.exp((-1j/h) * ((x - x[pt,:]) @ np.transpose(p0))) )
+                    psi0 = np.multiply( np.exp( -k[:,pt]/(2*h) ), np.exp((-1j/h) * ((ed - ed[pt,:]) @ np.transpose(p0))) )
                     psi0 = psi0 / np.linalg.norm(psi0)
 
                     # calculate error in expectation value (should be 1 since Hamiltonian approximates p^2 and |p|=1)
@@ -976,106 +1026,12 @@ if __name__ == '__main__':
             if qml_params['colorfile']!=False:
                 try:
                     # colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
-                    # colors = read_in_matrix(qml_params['colorfile'], qml_params['verbose'])
-                    colors = np.loadtxt(open(qml_params['colorfile'], "rb"), delimiter=",", dtype=str)
-                    colors = np.array(colors)
+                    colors = read_in_matrix(qml_params['colorfile'], qml_params['verbose'])
                 except:
-                    print("Cannot open color file: " + qml_params['colorfile'] + "... Exiting.")
+                    print("Cannot open data file: " + qml_params['colorfile'] + "... Exiting.")
                     raise Exception("Cannot open color file")
                 else:
-                    if qml_params['labelfile']!=False:
-                        try:
-                            # colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
-                            labels = np.loadtxt(open(qml_params['labelfile'], "rb"), delimiter=",", dtype=str)
-                        except:
-                            print("Cannot open label file: " + qml_params['labelfile'] + "... Exiting.")
-                            raise Exception("Cannot open label file")
-                        else:
-                            # legend_handles = []
-                            # legend_handles.append(plt.Line2D([0], [0], marker='o', color='w', label=label, markerfacecolor=color))
-                            
-                            # print("label size ", labels.size)
-                            # print(labels)
-                            # print("color size ", colors.size)
-                            # print(colors)
-                            # print("embed size", ed.size)
-                            # print("n ", ed[:,0].size)
-
-                            
-                            unique_classes = np.unique(np.array(colors))
-                            # print("unique_classes", unique_classes)
-                            # Generate a colormap with a different color for each class
-                            num_classes = len(unique_classes)
-                            classSizes = np.zeros((num_classes,1))
-                            # base_cmap = plt.get_cmap('tab20')
-                            # # Create a new colormap with 99 colors by replicating the base_cmap
-                            # num_colors = num_classes
-                            # new_colors = np.concatenate([base_cmap(i * np.ones(5)) for i in range(5)])
-                            # # Trim the colormap to have the desired number of colors
-                            # cmap = ListedColormap(new_colors[:num_colors], name='custom_cmap', N=num_colors)
-                            # print("num_classes", num_classes)
-                            cmap = plt.get_cmap('hsv', num_classes) # viridis Spectral
-                            # print("cmap ", cmap)
-                            print("colors", colors)
-
-                            # Get multiple qualitative colormaps
-                            cmaps = ['tab20b', 'tab20c', 'Set1', 'Set3', 'Dark2', 'Accent']
-
-                            # Combine colormaps to create a new colormap
-                            num_colors = num_classes
-                            new_colors = []
-                            print("cmap size", len(cmaps))
-                            for cmap in cmaps:
-                                base_cmap = plt.get_cmap(cmap)
-                                new_colors.extend(base_cmap(np.arange(base_cmap.N)))
-                                # new_colors.extend(base_cmap(np.linspace(0, 1, num_colors // len(cmaps))))
-
-                            # Trim the colormap to have the desired number of colors
-                            cmap = ListedColormap(new_colors[:num_colors], name='custom_cmap', N=num_colors)
-
-
-                            labelColorMapping = {}
-                            for i, label in enumerate(labels):
-                                if label not in labelColorMapping:
-                                    # print("label color, ", label, colors[i], i)
-                                    labelColorMapping[label] = colors[i]
-                            i = 0
-                            for label, color in labelColorMapping.items():
-                                # print("label color", label, color)
-                                # print("colors==color", colors==color)
-                                # print("colorsingle", np.where(unique_classes == color))
-                                tempColors = colors[(colors==color).reshape(-1)]
-                                tempX = ed[(colors==color).reshape(-1),:]
-                                tempLabels = labels[(labels==label)]
-                                # print("tempX size", tempX.size)
-                                # print("tempColors size", tempColors.size)
-                                # print("tempLabels size", tempLabels.size)
-                                # print("color, ", color.size, color, color[0])
-                                colorSingle = cmap(np.where(unique_classes == color))
-                                # print("colorSingle ", colorSingle, color)
-                                colorPrint = np.full((tempX[:,0].shape[0],4), colorSingle)
-                                if (tempX.size > 0):
-                                    ax.scatter(tempX[:,0], tempX[:,1], tempX[:,2], c=colorPrint, label=label)
-                                # ax.scatter(tempX[:,0], tempX[:,1], tempX[:,2], label=label)
-                                classSizes[i] = tempX.size
-                                i += 1
-                            plt.legend(ncol=num_classes/25, fontsize="4")
-
-                            # legend_entries = {}
-                            # # Create the scatter plot with unique labels and their respective colors
-                            # for i, label in enumerate(labels):
-                            #     if label not in legend_entries:
-                            #         legend_entries[label] = ax.scatter(ed[i,0], ed[i,1], ed[i,2], c=colors[i], label=label, cmap=plt.cm.Spectral)
-                            #     else:
-                            #         ax.scatter(ed[i,0], ed[i,1], ed[i,2], c=colors[i], cmap=plt.cm.Spectral)
-                            # # Create a custom legend based on the unique labels and colors
-                            # handles = [legend_entries[label] for label in legend_entries]
-                            # plt.legend(handles=handles)
-                            
-                            
-                            # ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral, label=labels)
-                            # plt.legend(loc='upper left')
-                    # ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral)
+                    ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral)
             else:
                 ax.scatter(ed[:,0], ed[:,1], ed[:,2])
             ax.axis('off')
@@ -1085,31 +1041,18 @@ if __name__ == '__main__':
 
         np.savetxt("{}.csv".format(sys.argv[1]), ed, delimiter=",")
 
-        score = silhouette_score(ed, colors)
-        print("silhouette score: ", score)
-        scores = np.zeros(unique_classes.shape)
-        i = 0
-        # colors = colors.reshape(-1)
-        # print("colors", colors, colors.shape)
-        # print("unique classes", unique_classes)
-        for i, clas in enumerate(unique_classes):
-            # print("clas", clas)
-            # tempColor = labelColorMapping[clas]
-            tempColors = np.ones(colors.shape) * 2
-            tempColors[colors == clas] = 1
-            # tempColors = tempColors.reshape((tempColors.size, 1))
-            # print("tempcolors", tempColors, tempColors.shape)
-            scores[i] = silhouette_score(ed, tempColors)
-        # print("class sizes", classSizes.flatten())
-        indices = np.argsort(classSizes.flatten())
-        # print("indices", indices)
-        print("class sizes", classSizes[indices].flatten())
-        scores = scores[indices]
-        np.set_printoptions(precision=4)
-        print("single class silhouette scores", scores)
+        # components = g.connected_components(mode='weak')
+        # fig, ax = plt.subplots()
+        # ig.plot(
+        #     components,
+        #     target=ax,
+        #     palette=ig.RainbowPalette(),
+        #     vertex_size=0.07,
+        #     vertex_color=list(map(int, ig.rescale(components.membership, (0, 200), clamp=True))),
+        #     edge_width=0.7
+        # )
+        # plt.show()
 
-
-        
         # components = g.connected_components(mode='weak')
         # fig, ax = plt.subplots()
         # ig.plot(
