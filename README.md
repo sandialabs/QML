@@ -75,6 +75,6 @@ If you use or refer to this project in any publication, please cite the correspo
 
 > 2. <a id="qcc"></a> Akshat Kumar. *On a quantum-classical correspondence: from graphs to manifolds* [arXiv:2112.10748](https://arxiv.org/abs/2112.10748) (2022).
 
-> 3. <a id="oostema"></a> Peter Oostema, Franz Franchetti. _Leveraging High Dimensional Spatial Graph Embedding as a Heuristic for Graph Algorithms._ [ieeexplore.ieee.org](https://spiral.ece.cmu.edu/pub-spiral/pubfile/PDCO2021_338.pdf) (2021).
+> 3. <a id="oostema"></a> Peter Oostema, Franz Franchetti. _Leveraging High Dimensional Spatial Graph Embedding as a Heuristic for Graph Algorithms_, [IEEE IPDPSW](https://spiral.ece.cmu.edu/pub-spiral/pubfile/PDCO2021_338.pdf) (2021).
 
-> 4. <a id="crane-heat"></a> Keenan Crane, Clarisse Weischedel, Max Wardetzky. _The Heat Method for Distance Computation_ [ACM](https://www.cs.cmu.edu/~kmcrane/Projects/HeatMethod/paperCACM.pdf)
+> 4. <a id="crane-heat"></a> Keenan Crane, Clarisse Weischedel, Max Wardetzky. _The Heat Method for Distance Computation_, [CACM](https://www.cs.cmu.edu/~kmcrane/Projects/HeatMethod/paperCACM.pdf) (2017).
