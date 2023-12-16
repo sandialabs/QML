@@ -41,11 +41,11 @@ git clone https://github.com/sandialabs/QML.git
 ## Manfold learning comparison
 For the [Swissroll dataset](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_swiss_roll.html) of 2000 points, QML is better able to *unroll* the dataset than other manifold learning techniques, when embedding into three dimensions. QML works by approximating wave dynamics on the dataset. Using this, a wavepacket localized at a sample point, with large oscillations in a prescribed direction, can be propagated to reveal the geodesic flow on the manifold. The hitting time between points gives a sparse graph of the data that can be embedded, giving a low-dimensional representation.
 
-We compare this with other popular graph embedding techniques: UMAP, Laplacian Eigenmaps, Diffusion Maps and t-SNE.
+We compare this with other popular graph embedding techniques: UMAP, Laplacian Eigenmaps, Diffusion Maps and $t$-SNE.
 
 - [UMAP](https://umap-learn.readthedocs.io/en/latest/) ([5](#umap)) aims to preserve the topological structure of the manifold and approximates it with a *fuzzy topological structure*, which it then embeds into a lower-dimensional Euclidean space. The assumptions are that the data is uniformly distribued on the manifold and that the manifold is locally connected and its Riemannian metric is a scalar matrix in ambient coordinates in some neighbourhood of each point.
 
-- [$t$-SNE](https://lvdmaaten.github.io/tsne/) ([6](#tsne)) aims to reduce dimensionality by placing Gaussian affinities between points in the high-dimensional ambient space and finding lower-dimensional coordinates that minimize the Kullback-Liebler divergence between the high-dimensional Gaussian distributions and lower-dimensional Student $t$-distributions.
+- [t-SNE](https://lvdmaaten.github.io/tsne/) ([6](#tsne)) aims to reduce dimensionality by placing Gaussian affinities between points in the high-dimensional ambient space and finding lower-dimensional coordinates that minimize the Kullback-Liebler divergence between the high-dimensional Gaussian distributions and lower-dimensional Student $t$-distributions.
 
 - Laplacian Eigenmaps ([7](#lap-eigmaps)) produces lower dimensional coordinates by using the values of some of the eigenfunctions of the graph Laplacian of a graph on the dataset constructed by connecting points within a certain scale-length based on the density of point samples.
 
@@ -57,6 +57,7 @@ We compare this with other popular graph embedding techniques: UMAP, Laplacian E
 <p align="center">
     <img src="images/MLcompareFull.PNG" alt="drawing" style="width:600px;"/>
 </p>
+
 ## Geodesic method comparison
 
 Quantum Manifold Learning (QML) computes geodesics using quantum dynamics derived from a diffusion process. The accuracy of the geodesics scales with the amount of data in the input. QML scales to higher-dimensional data more efficiently than common geodesic methods. We compare the resolution of geodesics by QML to the *Heat Method* (our terminology) of [4](#crane-heat) and shortest paths on local neighbourhood graphs. The Heat Method attempts to recover geodesic distances to a given point by approximately solving the heat equation on the dataset with a singular point source as the initial condition, computing its normalized gradient vector field and then approximately solving the Poisson equation with respect to this gradient field. This method needs structured approximations to the manifold, or proceeds by an initial Voronoi cell decomposition from the dataset. Dijkstra's algorithm can also be used on a nearest neighbours graph of Euclidean distances to approximate geodesic distance.
