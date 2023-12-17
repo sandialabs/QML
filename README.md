@@ -24,7 +24,7 @@ For an example input file and required parameters see `QML_test_input.dat`. Some
 * `dt` : Determines time step size for propagating geodesics. Paths are found at an unit speed, so time step is equivilant to distance.
 * `nProp` : Number of time steps taken. Taking more steps along geodesics increases the number of paths found between points as more distance is covered.
 * `nColl` : Number of initial momenta for geodesics. Each starting momentum is a direction towards its "nColl" nearest neighbors. Increasing this parameter will start the propagation in more directions.
-* `H_test` : Boolean to autmatically tune error terms. The optimal values may not be the minimum found from this test, but it often close to the minimum.
+* `H_test` : Boolean to autmatically tune error terms. The optimal values may not be the minimum found from this test, but they are often close to the minimum.
 
 The outputs of QML are:
     - Saves geodesic distance matrix to file "f.out", where "f" is the input file name
