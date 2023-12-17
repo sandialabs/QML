@@ -27,8 +27,8 @@ For an example input file and required parameters see `QML_test_input.dat`. Some
 * `H_test` : Boolean to autmatically tune error terms. The optimal values may not be the minimum found from this test, but they are often close to the minimum.
 
 The outputs of QML are:
-    - Saves geodesic distance matrix to file "f.out", where "f" is the input file name
-    - Optionally, also plots an embedding of the graph if SHOW_EMBEDDING = 2 or 3 (this number sets the embedding dimension) in the input file
+    - Saves geodesic distance matrix to file `f.out`, where `f` is the input file name
+    - Optionally, also plots an embedding of the graph if `SHOW_EMBEDDING` = 2 or 3 (this number sets the embedding dimension) in the input file
 
 ## Development
 
