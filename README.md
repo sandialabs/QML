@@ -19,11 +19,11 @@ python3 qml_serial.py QML_test_input.data
 
 For an example input file and required parameters see `QML_test_input.dat`. Some useful parameters are described below. For a full discribtion refer to psuedocode in Appendix VI of [[SLoD](#slod)] for interpretation of code and parameters.
 
-* `logepsilon` : This is an error term for scaling parameters used in constructing the graph Laplacian.
+* `logepsilon` : This sets the scale length (`logepsilon` $= 2 \log \sqrt{\epsilon}$) at which the $\sqrt{\epsilon}$-nearest-neighbour graph, and hence the graph Laplacian, is constructed from the dataset.
 * `alpha` : This scales with `logepsilon` to determine the error term $h$. This term bounds the error on the geodesics found through propagation.
 * `dt` : Determines time step size for propagating geodesics. Paths are found at an unit speed, so time step is equivilant to distance.
-* `nProp` : Number of time steps taken. Taking more steps along geodesics increase the number of paths found between points as more distance is covered.
-* `nColl` : Number of initial momenta for geodesics. Each starting momentum start is a direction towards its "nColl" nearest neighbors. Increasing this parameter will start the propagation in more directions.
+* `nProp` : Number of time steps taken. Taking more steps along geodesics increases the number of paths found between points as more distance is covered.
+* `nColl` : Number of initial momenta for geodesics. Each starting momentum is a direction towards its "nColl" nearest neighbors. Increasing this parameter will start the propagation in more directions.
 * `H_test` : Boolean to autmatically tune error terms. The optimal values may not be the minimum found from this test, but it often close to the minimum.
 
 The outputs of QML are:
