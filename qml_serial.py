@@ -958,7 +958,21 @@ if __name__ == '__main__':
             lyout2d = g.layout_fruchterman_reingold()
             ax = fig.add_subplot(111)
             ed = np.array(lyout2d.coords)
-            ig.plot(g, layout=lyout2d, target=ax, edge_width=0)
+            # ig.plot(g, layout=lyout2d, target=ax, edge_width=0)
+
+            if qml_params['colorfile']!=False:
+                try:
+                    # colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
+                    colors = read_in_matrix(qml_params['colorfile'], qml_params['verbose'])
+                    # colors = np.loadtxt(open(qml_params['colorfile'], "rb"), delimiter=",", dtype=str)
+                    colors = np.array(colors)
+                except:
+                    print("Cannot open color file: " + qml_params['colorfile'] + "... Exiting.")
+                    raise Exception("Cannot open color file")
+                else:
+                    ax.scatter(ed[:,0], ed[:,1], c=colors, cmap=plt.cm.Spectral)
+            else:
+                ax.scatter(ed[:,0], ed[:,1])
             ax.axis('off')
             ax.set_title('2D embedding')
 
@@ -976,8 +990,8 @@ if __name__ == '__main__':
             if qml_params['colorfile']!=False:
                 try:
                     # colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
-                    # colors = read_in_matrix(qml_params['colorfile'], qml_params['verbose'])
-                    colors = np.loadtxt(open(qml_params['colorfile'], "rb"), delimiter=",", dtype=str)
+                    colors = read_in_matrix(qml_params['colorfile'], qml_params['verbose'])
+                    # colors = np.loadtxt(open(qml_params['colorfile'], "rb"), delimiter=",", dtype=str)
                     colors = np.array(colors)
                 except:
                     print("Cannot open color file: " + qml_params['colorfile'] + "... Exiting.")
@@ -1075,7 +1089,7 @@ if __name__ == '__main__':
                             
                             # ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral, label=labels)
                             # plt.legend(loc='upper left')
-                    # ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral)
+                    ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral)
             else:
                 ax.scatter(ed[:,0], ed[:,1], ed[:,2])
             ax.axis('off')
