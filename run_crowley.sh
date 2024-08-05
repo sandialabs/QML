@@ -1,0 +1,3 @@
+echo Running qml_serial on Person $1...
+python change_input_person.py $1
+python qml_serial.py QML_crowley_input.dat

@@ -1,0 +1,39 @@
+experiments utils: displayColors, makePickle, plotFromCuda
+Cuda Files: silhoutteUnprecise, unprecise
+
+Main Logic: 
+    qml_geodesic, qml_graph, qml_serial, qml_par (these are very all very similar)
+
+    otherGraphEmbedding (contains one helper: plotDataColorLabels) (outputs scores)
+    myExample (outputs scores)
+    graphEmbedDriver (does not output scores)
+
+
+DONE: Question: Confirm the differences and similarities between the files. What are the last 3 in Main Logic doing?
+
+
+
+qml_serial Structure:
+
+Root:
+=============================
+initialize
+---------------------------------
+perform_hamiltonian_test (uses Deviation Measure to select hyperparams epislon and h)
+    read_in_matrix
+    get_hamiltonian
+---------------------------------
+run
+    read_in_matrix
+    PCA_for_ts
+    qmaniGetU_nnGL
+
+    propagate
+        pick_closest_to_mean
+
+    propagate_PCA
+        pick_closest_to_mean_PCA
+        pick_closest_to_mean
+---------------------------------
+read_in_matrix
+---------------------------------

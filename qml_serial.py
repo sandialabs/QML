@@ -11,6 +11,9 @@
 # 
 
 import time
+import datetime
+import shutil
+import pickle
 import os
 import sys
 import json
@@ -25,216 +28,18 @@ from matplotlib.colors import ListedColormap
 from matplotlib import cm
 import matplotlib.cm as cm
 import igraph as ig
-import pandas as pd
-import h5py
 import scipy as sp
 from sklearn.metrics import silhouette_score
+
+from qml_serial_analyze import visualize_propagations
+from qml_serial_preprocess import initialize, read_in_matrix
 
 # np.set_printoptions(threshold=sys.maxsize)
 
 # ------------------------------------
 # Functions
 # ------------------------------------
-def initialize(inp):
-    """
-        Initialize parameters
-
-        Inputs:
-            inp: dictionary with parameters read from file. Not all parameters may be specified, and need to convert boolean parameters from text string to bool
-
-        Outputs:
-            qml_params: parameters dictionary
-    """
-
-    qml_params = dict()
-    if 'logepsilon' in inp:
-        qml_params['logepsilon'] = inp['logepsilon']
-    else:
-        qml_params['logepsilon'] = -1
-
-    if 'alpha' in inp:
-        qml_params['alpha'] = inp['alpha']
-    else:
-        qml_params['alpha'] = 1.5
-
-    if 'dt' in inp:
-        qml_params['dt'] = inp['dt']
-    else:
-        qml_params['dt'] = 0.1
-
-    if 'nProp' in inp:
-        qml_params['nProp'] = inp['nProp']
-    else:
-        qml_params['nProp'] = 10
-
-    if 'nColl' in inp:
-        qml_params['nColl'] = inp['nColl']
-    else:
-        qml_params['nColl'] = 1
-
-    if 'PCA_PREP' in inp:
-        if inp['PCA_PREP'].lower() in ['true', '1', 't']:
-            qml_params['PCA_PREP'] = True
-        else:
-            qml_params['PCA_PREP'] = False
-    else:
-        qml_params['PCA_PREP'] = False
-
-    if 'PCA_MEAS' in inp:
-        if inp['PCA_MEAS'].lower() in ['true', '1', 't']:
-            qml_params['PCA_MEAS'] = True
-        else:
-            qml_params['PCA_MEAS'] = False
-    else:
-        qml_params['PCA_MEAS'] = False
-
-    if 'PCA_dims' in inp:
-        qml_params['PCA_dims'] = inp['PCA_dims']
-    else:
-        qml_params['PCA_dims'] = 0
-
-    if 'delta_PCA' in inp:
-        qml_params['delta_PCA'] = inp['delta_PCA']
-    else:
-        qml_params['delta_PCA'] = 1.5
-
-    if 'gamma' in inp:
-        qml_params['gamma'] = inp['gamma']
-    else:
-        qml_params['gamma'] = 0.1
-
-    if 'prob_thresh' in inp:
-        qml_params['prob_thresh'] = inp['prob_thresh']
-    else:
-        qml_params['prob_thresh'] = 0
-
-    if 'USE_MAX' in inp:
-        if inp['USE_MAX'].lower() in ['true', '1', 't']:
-            qml_params['USE_MAX'] = True
-        else:
-            qml_params['USE_MAX'] = False
-    else:
-        qml_params['USE_MAX'] = False
-
-    if 'verbose' in inp:
-        if inp['verbose'].lower() in ['true', '1', 't']:
-            qml_params['verbose'] = True
-        else:
-            qml_params['verbose'] = False
-    else:
-        qml_params['verbose'] = False
-
-    if 'SHOW_EMBEDDING' in inp:
-        if inp['SHOW_EMBEDDING'].lower() in ['2d', '2']:
-            qml_params['SHOW_EMBEDDING'] = 2
-        elif inp['SHOW_EMBEDDING'].lower() in ['3d', '3']:
-            qml_params['SHOW_EMBEDDING'] = 3
-        else:
-            qml_params['SHOW_EMBEDDING'] = 0
-    else:
-        qml_params['SHOW_EMBEDDING'] = 0
-
-    if 'datafile' in inp:
-        qml_params['datafile'] = inp['datafile']
-    else:
-        qml_params['datafile'] = 'data.csv'
-
-    if 'colorfile' in inp:
-        qml_params['colorfile'] = inp['colorfile']
-    else:
-        qml_params['colorfile'] = False
-
-    if 'labelfile' in inp:
-        qml_params['labelfile'] = inp['labelfile']
-    else:
-        qml_params['labelfile'] = False
-
-    if 'H_test' in inp:
-        if inp['H_test'].lower() in ['true', '1', 't']:
-            qml_params['H_test'] = True
-        else:
-            qml_params['H_test'] = False
-    else:
-        qml_params['H_test'] = False
-
-    if 'H_test_avg' in inp:
-        qml_params['H_test_avg'] = inp['H_test_avg']
-    else:
-        qml_params['H_test_avg'] = 20
-
-    return qml_params
-
-def read_in_matrix(datafile, verbose):
-    ext = os.path.splitext(datafile)[1]
-    # print(ext)
-    if ext == ".csv":
-        data = np.genfromtxt(datafile, delimiter=',')
-    elif ext == ".pkl" or ext == ".pickle" or ext == ".npy":
-        try:
-            data = np.load(datafile, allow_pickle=True)
-        except:
-            data = pd.read_pickle(datafile)
-            data = data.to_numpy()
-            print("panda")
-        # data = pd.read_pickle(datafile)
-    elif ext == ".hdf" or ext == ".h5":
-        # Broken for example file, may be too complicated
-        try:
-            data = pd.read_hdf(datafile).to_numpy()
-        except:
-            hf = h5py.File(datafile, 'r')
-            data = []
-            for i in hf.values():
-                data.append(i)
-            print(data)
-            data = np.array(data)
-    elif ext == ".sql":
-        data = pd.read_sql(datafile).to_numpy()
-    elif ext == ".xlsx":
-        data = pd.read_xlsx(datafile).to_numpy()
-    elif ext == ".json":
-        data = pd.read_json(datafile).to_numpy()
-    elif ext == ".html":
-        data = pd.read_html(datafile).to_numpy()
-    # elif ext == ".mat":
-    #     dict = sp.io.loadmat(datafile)
-    #     items = dict.items()
-    #     data = np.array(items)
-    #     print(".mat debug")
-    #     print(data.shape)
-    #     print(items)
-    #     # print(data)
-    # elif ext == ".mtx":
-    #     data = sp.io.mmread(datafile)
-    #     print("mtx")
-    #     print(data)
-    else:
-        print("Cannot parse data file: " + datafile + """. Supported file types
-        include .csv, .pickle, .pkl, .hdf, .h5, .sql, .xlsx, .json, and .html.""")
-        raise Exception("Unsupported data file")
-    # print(data.shape)
-    # print(len(data.shape))
-    # print(type(data.dtype))
-    # print(data)
-    if (len(data.shape) > 2):
-        print("Only data from tensors of dimension 2 are supported.")
-        raise Exception("Unsuppored data")
-    
-    nan_bools = np.isnan(data)
-    if (True in nan_bools):
-        if (verbose):
-            print("NaN found in input. Removing data points with issue.")
-        data = data[~np.isnan(data).any(axis=1), :]
-
-    complex_bools = np.iscomplex(data)
-    if (True in complex_bools):
-        if (verbose):
-            print("Method only take real values. Converting to real matrix.")
-        data = np.real(data)
-    
-    # print(data)
-    return data
-    
+   
 def PCA_for_ts(data, pt, no_dims):
     """
     Perform local PCA around a point to estimate tangent space
@@ -330,7 +135,7 @@ def qmaniGetU_nnGL( k, dt, epsilon, verbose=0, trunc=0 ):
     return Udt, D_normalizer
 
 
-def pick_closest_to_mean(x, prob, thresh):
+def pick_closest_to_mean(x, prob, thresh, verbose=False):
     """
     Return the index in x that is the point that is closest to the mean determined by prob
 
@@ -342,7 +147,7 @@ def pick_closest_to_mean(x, prob, thresh):
         ind: index(indices) for the data point closest to mean(s)
         dist: distance(s) (Euclidean) between mean(s) and closest data point(s)
     """
-    nc = np.shape(prob)[1]
+    nc = np.shape(prob)[1] # num columns
 
     # renormalize probability distribution if thresh>0
     if thresh>0:
@@ -357,10 +162,17 @@ def pick_closest_to_mean(x, prob, thresh):
     indSec = np.arange(nc, dtype=np.uint)
 
     # find closest point for each ncol
-    temp = np.transpose(x) @ prob
-    dists = spatial.distance.cdist(x, np.transpose(temp))
-    ind = np.argmin(dists, axis=0)
-    dist = dists[ind,indSec]
+    temp = np.transpose(x) @ prob # Mxk matrix
+    dists = spatial.distance.cdist(x, np.transpose(temp)) # Nxk matrix
+
+    ind = np.argmin(dists, axis=0) # 1xk matrix
+    dist = dists[ind,indSec] # 1xk matrix
+
+    if verbose:
+        print('picking closest to mean')
+        print(temp.shape)
+        print(np.sort(dists, axis=0)[:3])
+        print(locals())
 
     return ind, dist
 
@@ -477,7 +289,6 @@ def propagate(pt, qml_params, h, Npts, Us, x, k):
     # propagate each of the initial states
     psi_coll = psi0_coll
     for pn in range(nProp):
-
         # propagate by one timestep (dt)
         psi_coll = Us @ psi_coll
 
@@ -486,12 +297,13 @@ def propagate(pt, qml_params, h, Npts, Us, x, k):
 
         # extract probabilites from propagated states
         values = np.abs(psi_coll)**2
+        verbose=False
 
         # for each of the nColl propagations, extract max (if USE_MAX is set) or mean position
         if USE_MAX:
             idx_store[pn,:] = np.argmax(values,axis=0)
         else:
-            ind, dist = pick_closest_to_mean(x, values, prob_thresh)
+            ind, dist = pick_closest_to_mean(x, values, prob_thresh, verbose)
             idx_store[pn,:] = ind
 
     return idx_store
@@ -530,7 +342,7 @@ def propagate_PCA(pt, qml_params, h, Npts, Us, PCA_map, x, k):
 
     # if verbose, output progress
     if verbose:
-        if np.mod(pt, 100)==0:
+        if np.mod(pt, 100)==0 or (np.mod(pt, 25) == 0 and pt > 300):
             print("Propagating " + str(pt) + "/" + str(Npts))
 
     # container for initial states (each initial state is a column in this matrix)
@@ -669,6 +481,7 @@ def run(qml_params):
     else:
         # Npts is the number of data points
         Npts = np.shape(x)[0]
+        x, norms = unit_sphere_normalize(x)
 
         # compute Euclidean squared distance matrix
         k = spatial.distance.squareform(spatial.distance.pdist(x, 'sqeuclidean'))
@@ -727,6 +540,8 @@ def run(qml_params):
         Udt, D_normalizer = qmaniGetU_nnGL( k, dt, epsilon, verbose, trunc=0 )
         D_normalizer_inv = spinv(D_normalizer)
         Us = D_normalizer @ Udt @ (D_normalizer_inv)
+        print(Us.shape)
+        print(Us)
 
 # Propagate
         # container to store destination points after propagation
@@ -762,7 +577,7 @@ def run(qml_params):
         e_time = time.time()
         print(f"QML Done. Time taken = {e_time-s_time}")
 
-        return D
+        return D, peak_idxs, x, k, norms
 
 def get_hamiltonian(k, epsilon):
     """
@@ -792,6 +607,65 @@ def get_hamiltonian(k, epsilon):
 
     return H
 
+
+
+### NORMALIZATION FUNCTIONS
+def box_unnormalize(x, least, greatest, upper_lim=1):
+    x /= upper_lim
+    x *= greatest
+    x += least
+    return x
+
+
+# upper_lim = .1 makes the maximum .1
+def box_normalize(x, upper_lim=1):
+    # subtract min and div by max (box normalization)
+    least = np.min(x)
+    x -= least
+    # min is now 0
+    
+    greatest = np.max(x)
+    x /= greatest
+    # max is now 1
+
+    x *= upper_lim 
+    return x, (least, greatest)
+
+def unit_sphere_unnormalize(x, norms, max_norm=True):
+    Npts = np.shape(x)[0]
+
+    if max_norm:
+        x *= max(norms)
+        return x
+
+    for i in range(Npts):
+        x[i] *= norms[i]
+    return x
+    
+
+def unit_sphere_normalize(x, max_norm=True):
+    Npts = np.shape(x)[0]
+    x = x.astype('float64')
+
+    # div by norm (unit sphere normalization)
+    norms = [np.linalg.norm(row) for row in x]
+    if max_norm:
+        x /= max(norms)
+        return x, norms
+    
+    for i in range(Npts):
+        x[i] /= norms[i]
+    return x, norms
+
+##### END NORMALIZATION
+
+# matrix printing function
+def row_to_str(row):
+    s = ''
+    for item in row:
+        s += f'{item},'
+    return s
+    
 def perform_hamiltonian_test(qml_params):
     """
     Test data-driven Hamiltonian with various values of epsilon and h.
@@ -804,8 +678,10 @@ def perform_hamiltonian_test(qml_params):
     """
 
     # range of parameters to test over
-    logeps_v = np.arange(-10,6,0.5)
-    logh_v =  np.arange(-10,6,0.5)
+    END = -6 # used to be -10
+    START = 0  # used to be 6
+    logeps_v = np.arange(END,START,0.5)
+    logh_v =  np.arange(END,START,0.5)
     Neps = np.shape(logeps_v)[0]
 
     # number of states to evaluate expectation over
@@ -814,13 +690,31 @@ def perform_hamiltonian_test(qml_params):
     # load data
     try:
         # x = np.genfromtxt(qml_params['datafile'], delimiter=',')
-        x = read_in_matrix(qml_params['datafile'], qml_params['verbose'])
+        x = read_in_matrix(qml_params['datafile'], qml_params['verbose']).astype(np.float64)
     except:
         print("Cannot open data file: " + qml_params['datafile'] + "... Exiting.")
         raise Exception("Cannot open data file")
     else:
         # Npts is the number of data points
         Npts = np.shape(x)[0]
+
+        ## NORMALIZATION
+        x, _ = unit_sphere_normalize(x)
+
+        for i in range(5):
+            print(x[i])
+
+        ### DEBUG PRINTS to check dist between first two images
+        # first = x[0]
+        # second = x[1]
+        # dist = 0
+        # with open('first_two_pts.txt', 'w') as f:
+        #     for i in range(len(first)):
+        #         f.write(f'{first[i]},,,{second[i]}\n')
+        #         dist += pow(first[i] - second[i], 2)
+        # print(dist)
+        # #### 
+
 
         # compute Euclidean squared distance matrix
         k = spatial.distance.squareform(spatial.distance.pdist(x, 'sqeuclidean'))
@@ -832,6 +726,7 @@ def perform_hamiltonian_test(qml_params):
 
         # loop over epsilon
         for le_i, le in enumerate(logeps_v):
+            print('out: ', le_i)
 
             if qml_params['verbose']:
                 if np.mod(le_i, 10)==0:
@@ -841,9 +736,11 @@ def perform_hamiltonian_test(qml_params):
 
             # calculate Hamiltonian
             H = get_hamiltonian(k, epsilon)
+            #print(H)
 
             # loop over h
             for lh_i, lh in enumerate(logh_v):
+                print('in: ', lh_i)
                 h = np.exp(lh)
                 temp = np.zeros([avg,])
 
@@ -854,9 +751,21 @@ def perform_hamiltonian_test(qml_params):
 
                     # sort other points according to their distance from pt
                     sorted_idx = np.squeeze(np.argsort(k[pt,]))
+                    assert sorted_idx[0] == pt, f'{pt} != {sorted_idx[0]}'
+                    # print(f'first closest index to {pt}: {sorted_idx[0]}')
+                    # print(f'second closest index to {pt}: {sorted_idx[1]}')
 
                     # pick momentum as (normalized) vector to closest point
                     p0 = x[sorted_idx[1],:] - x[pt,:]
+
+                    ### DEBUG PRINTS to check nearby points
+                    # _pts = [x[pt,:], x[sorted_idx[1]], x[sorted_idx[2]], x[sorted_idx[3]]]
+                    # print(_pts[0], np.sum(_pts[0] - _pts[0]))
+                    # print(_pts[1], np.sum(_pts[1] - _pts[0]))
+                    # print(_pts[2], np.sum(_pts[2] - _pts[1]))
+                    # print(_pts[3], np.sum(_pts[3] - _pts[2]))
+                    # print('-------------')
+
                     p0 = p0/np.linalg.norm(p0)
 
                     # formulate coherent state (in extrinsic coordinates)
@@ -869,10 +778,10 @@ def perform_hamiltonian_test(qml_params):
                 # store deviation
                 devs[le_i, lh_i] = np.average(temp)
 
-        for i in range(devs.shape[0]):
-            for j in range(devs.shape[1]):
-                if (devs[i,j] > 1):
-                    devs[i,j] = 1
+        # for i in range(devs.shape[0]):
+        #     for j in range(devs.shape[1]):
+        #         if (devs[i,j] > 1):
+        #             devs[i,j] = 1
 
         # plot
         loge, logh = np.meshgrid(logeps_v, logh_v, indexing='ij')
@@ -880,7 +789,7 @@ def perform_hamiltonian_test(qml_params):
         print("loge", loge)
         print("logh", logh)
         print("devs", devs)
-        im = ax.pcolormesh(loge, logh, devs)
+        im = ax.pcolormesh(loge, logh, np.log(devs))
         # im = ax.pcolormesh(np.transpose(logh), np.transpose(loge), devs)
         fig.colorbar(im)
 
@@ -889,6 +798,9 @@ def perform_hamiltonian_test(qml_params):
         ax.set_title('Deviation -- choose log(epsilon) and log(h) values')
 
         plt.savefig('h_test.png')
+
+        global LOG_PATH
+        plt.savefig(os.path.join(LOG_PATH,'h_test.png'))
         plt.show()
 
         retval = {}
@@ -899,6 +811,20 @@ def perform_hamiltonian_test(qml_params):
         retval['logh'] = float(entry)
 
         return retval
+    
+
+# Saves embedding graph and geodesic distance matrix
+def results_saver(D):
+    global LOG_PATH
+    global DIM
+
+    embedding_filename = os.path.join(LOG_PATH, f'embedding_{DIM}d.out')
+    np.savetxt(embedding_filename, D, fmt='%.10f', delimiter=',')
+
+    graph_filename = os.path.join(LOG_PATH, f'embedding_{DIM}d_graph.png')
+    plt.savefig(graph_filename)
+
+
 
 # ------------------------------------
 # main
@@ -932,6 +858,16 @@ if __name__ == '__main__':
         print(qml_params)
         print('\n')
 
+        ### pre-processing for logging / saving results
+        DIM = qml_params['SHOW_EMBEDDING']
+        RESULTS_DIR = 'results'
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        log_filename = f'{sys.argv[1].split(".")[0]}-{timestamp}'
+        LOG_PATH = os.path.join(RESULTS_DIR, log_filename)
+        os.makedirs(LOG_PATH)
+        shutil.copyfile(sys.argv[1], os.path.join(LOG_PATH, sys.argv[1])) # copies param file for logging
+        ### 
+
         # if H_test is set, perform it
         if qml_params['H_test']:
             print("Performing Hamiltonian test ...")
@@ -940,15 +876,33 @@ if __name__ == '__main__':
             # set epsilon and alpha according to values selected from H_test
             qml_params['logepsilon'] = vals['logepsilon']
             qml_params['alpha'] = vals['logepsilon']/vals['logh'] - 2
-            print( 'Using log(eps)={}, alpha={}'.format(qml_params['logepsilon'], qml_params['alpha']))
+            print( 'Using log(eps)={}, log(h)={}, alpha={}'.format(qml_params['logepsilon'], vals['logh'], qml_params['alpha']))
 
         # run QML
-        D = run(qml_params)
+        D, peak_idxs, x, k, norms = run(qml_params)
+        print(k.shape)
+
+
+        ### SAVING QML RESULTS
+        with open('euclidian_matrix.txt', 'w') as f:
+            for i in k:
+                for j in i:
+                    f.write(f'{j}, ')
+                f.write('\n')
         print(np.count_nonzero(D))
+
+        with open(os.path.join(LOG_PATH, 'peak_idxs.pickle'), 'wb') as f: 
+            pickle.dump(peak_idxs, f)
+
+        original_x = unit_sphere_unnormalize(x, norms)
+        with open(os.path.join(LOG_PATH, 'x.pickle'), 'wb') as f: 
+            pickle.dump(original_x, f)
 
         # save geodesic distance matrix to file
         fname = "{}.out".format(sys.argv[1])
         np.savetxt(fname, D, fmt='%.10f', delimiter=',')
+        ###### DONE SAVING: CAN BE ANALYZED SEPARATELY USING qml_serial_analyze.py
+
 
         if qml_params['SHOW_EMBEDDING']==2:
             print("Computing 2D embedding using geodesic distance matrix ...")
@@ -961,12 +915,15 @@ if __name__ == '__main__':
             ig.plot(g, layout=lyout2d, target=ax, edge_width=0)
             ax.axis('off')
             ax.set_title('2D embedding')
-
+            results_saver(D)
             plt.show()
 
         if qml_params['SHOW_EMBEDDING']==3:
-            print("Computing 3D embedding using geodesic distance matrix ...")
-            g = ig.Graph.Weighted_Adjacency(D)
+            #print("Computing 3D embedding using geodesic distance matrix ...")
+            #g = ig.Graph.Weighted_Adjacency(D)
+
+            print("Computing 3D embedding using euclidian distance matrix ...")
+            g = ig.Graph.Weighted_Adjacency(k)
             fig = plt.figure(figsize=(6,6))
 
             lyout3d = g.layout_fruchterman_reingold_3d()
@@ -1081,34 +1038,44 @@ if __name__ == '__main__':
             ax.axis('off')
             ax.set_title('3D embedding')
 
+            results_saver(D)
             plt.show()
+            
+            if qml_params['colorfile']!=False:
+                score = silhouette_score(ed, colors)
+                print("silhouette score: ", score)
+                scores = np.zeros(unique_classes.shape)
+                i = 0
+                # colors = colors.reshape(-1)
+                # print("colors", colors, colors.shape)
+                # print("unique classes", unique_classes)
+                for i, clas in enumerate(unique_classes):
+                    # print("clas", clas)
+                    # tempColor = labelColorMapping[clas]
+                    tempColors = np.ones(colors.shape) * 2
+                    tempColors[colors == clas] = 1
+                    # tempColors = tempColors.reshape((tempColors.size, 1))
+                    # print("tempcolors", tempColors, tempColors.shape)
+                    scores[i] = silhouette_score(ed, tempColors)
+                # print("class sizes", classSizes.flatten())
+                indices = np.argsort(classSizes.flatten())
+                # print("indices", indices)
+                print("class sizes", classSizes[indices].flatten())
+                scores = scores[indices]
+                np.set_printoptions(precision=4)
+                print("single class silhouette scores", scores)
+
 
         np.savetxt("{}.csv".format(sys.argv[1]), ed, delimiter=",")
 
-        score = silhouette_score(ed, colors)
-        print("silhouette score: ", score)
-        scores = np.zeros(unique_classes.shape)
-        i = 0
-        # colors = colors.reshape(-1)
-        # print("colors", colors, colors.shape)
-        # print("unique classes", unique_classes)
-        for i, clas in enumerate(unique_classes):
-            # print("clas", clas)
-            # tempColor = labelColorMapping[clas]
-            tempColors = np.ones(colors.shape) * 2
-            tempColors[colors == clas] = 1
-            # tempColors = tempColors.reshape((tempColors.size, 1))
-            # print("tempcolors", tempColors, tempColors.shape)
-            scores[i] = silhouette_score(ed, tempColors)
-        # print("class sizes", classSizes.flatten())
-        indices = np.argsort(classSizes.flatten())
-        # print("indices", indices)
-        print("class sizes", classSizes[indices].flatten())
-        scores = scores[indices]
-        np.set_printoptions(precision=4)
-        print("single class silhouette scores", scores)
-
-
+        ###### Visualizing Propagations: 
+        resize = .125
+        SHAPE = (int(resize*720),int(resize*819)) # teapot image shape
+        with open(os.path.join(LOG_PATH, 'shape.txt'), 'w') as f:
+            f.write(f'{SHAPE[0]}\n{SHAPE[1]}')
+        visualize_propagations(original_x, peak_idxs, qml_params['nProp'], qml_params['nColl'], START_IDX=3, SHAPE=SHAPE)
+        print(f'Saved data to {LOG_PATH}')
+       
         
         # components = g.connected_components(mode='weak')
         # fig, ax = plt.subplots()

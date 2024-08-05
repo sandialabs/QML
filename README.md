@@ -7,13 +7,14 @@ The `QML` package provides an implementation of manifold learning via quantum dy
 ## Installation
 
 The `QML` package only consists of one file qml_serial.py, which contains all functions required.
-
+`
 ## Usage
 
 The QML code is executed on data stored in a CSV, h5, sql, xlsx, or json file. The data must just store a matrix as more complex formats are not processed.
-The code is called with a input file that specifies all parameters, e.g.,
+The code is called with a` input file that specifies all parameters, e.g.,
 
 ```
+python3 experiments/makePickle.py
 python3 qml_serial.py QML_test_input.data
 ```
 
