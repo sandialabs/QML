@@ -2,5 +2,5 @@
 *.pickle
 QML_teapot_input.dat.csv
 QML_teapot_input.dat.out
-__pycache__/
+*__pycache__*
 euclidian_matrix.txt

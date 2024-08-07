@@ -825,6 +825,147 @@ def results_saver(D):
     plt.savefig(graph_filename)
 
 
+def fill_graph(ax, ed, do_score=False):
+    num_dim = len(ed[0])
+    
+    if qml_params['colorfile']!=False:
+        try:
+            # colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
+            colors = read_in_matrix(qml_params['colorfile'], qml_params['verbose'])
+            # colors = np.loadtxt(open(qml_params['colorfile'], "rb"), delimiter=",", dtype=str)
+            colors = np.array(colors)
+        except:
+            print("Cannot open color file: " + qml_params['colorfile'] + "... Exiting.")
+            raise Exception("Cannot open color file")
+        else:
+            if num_dim == 2:
+                ax.scatter(ed[:,0], ed[:,1], c=colors, cmap=plt.cm.Spectral)
+            elif num_dim == 3:
+                ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral)
+        
+            if do_score:
+                score = silhouette_score(ed, colors)
+                print("silhouette score: ", score)
+                scores = np.zeros(unique_classes.shape)
+                i = 0
+                # colors = colors.reshape(-1)
+                # print("colors", colors, colors.shape)
+                # print("unique classes", unique_classes)
+                for i, clas in enumerate(unique_classes):
+                    # print("clas", clas)
+                    # tempColor = labelColorMapping[clas]
+                    tempColors = np.ones(colors.shape) * 2
+                    tempColors[colors == clas] = 1
+                    # tempColors = tempColors.reshape((tempColors.size, 1))
+                    # print("tempcolors", tempColors, tempColors.shape)
+                    scores[i] = silhouette_score(ed, tempColors)
+                # print("class sizes", classSizes.flatten())
+                indices = np.argsort(classSizes.flatten())
+                # print("indices", indices)
+                print("class sizes", classSizes[indices].flatten())
+                scores = scores[indices]
+                np.set_printoptions(precision=4)
+                print("single class silhouette scores", scores)
+
+
+    else:
+        if qml_params['labelfile']!=False:
+            try:
+                # colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
+                labels = np.loadtxt(open(qml_params['labelfile'], "rb"), delimiter=",", dtype=str)
+            except:
+                print("Cannot open label file: " + qml_params['labelfile'] + "... Exiting.")
+                raise Exception("Cannot open label file")
+            else:
+                # legend_handles = []
+                # legend_handles.append(plt.Line2D([0], [0], marker='o', color='w', label=label, markerfacecolor=color))
+                
+                # print("label size ", labels.size)
+                # print(labels)
+                # print("color size ", colors.size)
+                # print(colors)
+                # print("embed size", ed.size)
+                # print("n ", ed[:,0].size)
+
+                
+                unique_classes = np.unique(np.array(colors))
+                # print("unique_classes", unique_classes)
+                # Generate a colormap with a different color for each class
+                num_classes = len(unique_classes)
+                classSizes = np.zeros((num_classes,1))
+                # base_cmap = plt.get_cmap('tab20')
+                # # Create a new colormap with 99 colors by replicating the base_cmap
+                # num_colors = num_classes
+                # new_colors = np.concatenate([base_cmap(i * np.ones(5)) for i in range(5)])
+                # # Trim the colormap to have the desired number of colors
+                # cmap = ListedColormap(new_colors[:num_colors], name='custom_cmap', N=num_colors)
+                # print("num_classes", num_classes)
+                cmap = plt.get_cmap('hsv', num_classes) # viridis Spectral
+                # print("cmap ", cmap)
+                print("colors", colors)
+
+                # Get multiple qualitative colormaps
+                cmaps = ['tab20b', 'tab20c', 'Set1', 'Set3', 'Dark2', 'Accent']
+
+                # Combine colormaps to create a new colormap
+                num_colors = num_classes
+                new_colors = []
+                print("cmap size", len(cmaps))
+                for cmap in cmaps:
+                    base_cmap = plt.get_cmap(cmap)
+                    new_colors.extend(base_cmap(np.arange(base_cmap.N)))
+                    # new_colors.extend(base_cmap(np.linspace(0, 1, num_colors // len(cmaps))))
+
+                # Trim the colormap to have the desired number of colors
+                cmap = ListedColormap(new_colors[:num_colors], name='custom_cmap', N=num_colors)
+
+
+                labelColorMapping = {}
+                for i, label in enumerate(labels):
+                    if label not in labelColorMapping:
+                        # print("label color, ", label, colors[i], i)
+                        labelColorMapping[label] = colors[i]
+                i = 0
+                for label, color in labelColorMapping.items():
+                    # print("label color", label, color)
+                    # print("colors==color", colors==color)
+                    # print("colorsingle", np.where(unique_classes == color))
+                    tempColors = colors[(colors==color).reshape(-1)]
+                    tempX = ed[(colors==color).reshape(-1),:]
+                    tempLabels = labels[(labels==label)]
+                    # print("tempX size", tempX.size)
+                    # print("tempColors size", tempColors.size)
+                    # print("tempLabels size", tempLabels.size)
+                    # print("color, ", color.size, color, color[0])
+                    colorSingle = cmap(np.where(unique_classes == color))
+                    # print("colorSingle ", colorSingle, color)
+                    colorPrint = np.full((tempX[:,0].shape[0],4), colorSingle)
+                    if (tempX.size > 0):
+                        ax.scatter(tempX[:,0], tempX[:,1], tempX[:,2], c=colorPrint, label=label)
+                    # ax.scatter(tempX[:,0], tempX[:,1], tempX[:,2], label=label)
+                    classSizes[i] = tempX.size
+                    i += 1
+                plt.legend(ncol=num_classes/25, fontsize="4")
+
+                # legend_entries = {}
+                # # Create the scatter plot with unique labels and their respective colors
+                # for i, label in enumerate(labels):
+                #     if label not in legend_entries:
+                #         legend_entries[label] = ax.scatter(ed[i,0], ed[i,1], ed[i,2], c=colors[i], label=label, cmap=plt.cm.Spectral)
+                #     else:
+                #         ax.scatter(ed[i,0], ed[i,1], ed[i,2], c=colors[i], cmap=plt.cm.Spectral)
+                # # Create a custom legend based on the unique labels and colors
+                # handles = [legend_entries[label] for label in legend_entries]
+                # plt.legend(handles=handles)
+                
+                # ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral, label=labels)
+                # plt.legend(loc='upper left')
+        else:
+            if num_dim == 2:
+                ax.scatter(ed[:,0], ed[:,1])
+            elif num_dim == 3:
+                ax.scatter(ed[:,0], ed[:,1], ed[:,2])
+
 
 # ------------------------------------
 # main
@@ -912,7 +1053,9 @@ if __name__ == '__main__':
             lyout2d = g.layout_fruchterman_reingold()
             ax = fig.add_subplot(111)
             ed = np.array(lyout2d.coords)
-            ig.plot(g, layout=lyout2d, target=ax, edge_width=0)
+            #ig.plot(g, layout=lyout2d, target=ax, edge_width=0)
+
+            fill_graph(ax, ed)
             ax.axis('off')
             ax.set_title('2D embedding')
             results_saver(D)
@@ -929,145 +1072,14 @@ if __name__ == '__main__':
             lyout3d = g.layout_fruchterman_reingold_3d()
             ax = fig.add_subplot(111, projection='3d')
             ed = np.array(lyout3d.coords)
-            # load color map
-            if qml_params['colorfile']!=False:
-                try:
-                    # colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
-                    # colors = read_in_matrix(qml_params['colorfile'], qml_params['verbose'])
-                    colors = np.loadtxt(open(qml_params['colorfile'], "rb"), delimiter=",", dtype=str)
-                    colors = np.array(colors)
-                except:
-                    print("Cannot open color file: " + qml_params['colorfile'] + "... Exiting.")
-                    raise Exception("Cannot open color file")
-                else:
-                    if qml_params['labelfile']!=False:
-                        try:
-                            # colors = np.genfromtxt(qml_params['colorfile'], delimiter=',')
-                            labels = np.loadtxt(open(qml_params['labelfile'], "rb"), delimiter=",", dtype=str)
-                        except:
-                            print("Cannot open label file: " + qml_params['labelfile'] + "... Exiting.")
-                            raise Exception("Cannot open label file")
-                        else:
-                            # legend_handles = []
-                            # legend_handles.append(plt.Line2D([0], [0], marker='o', color='w', label=label, markerfacecolor=color))
-                            
-                            # print("label size ", labels.size)
-                            # print(labels)
-                            # print("color size ", colors.size)
-                            # print(colors)
-                            # print("embed size", ed.size)
-                            # print("n ", ed[:,0].size)
-
-                            
-                            unique_classes = np.unique(np.array(colors))
-                            # print("unique_classes", unique_classes)
-                            # Generate a colormap with a different color for each class
-                            num_classes = len(unique_classes)
-                            classSizes = np.zeros((num_classes,1))
-                            # base_cmap = plt.get_cmap('tab20')
-                            # # Create a new colormap with 99 colors by replicating the base_cmap
-                            # num_colors = num_classes
-                            # new_colors = np.concatenate([base_cmap(i * np.ones(5)) for i in range(5)])
-                            # # Trim the colormap to have the desired number of colors
-                            # cmap = ListedColormap(new_colors[:num_colors], name='custom_cmap', N=num_colors)
-                            # print("num_classes", num_classes)
-                            cmap = plt.get_cmap('hsv', num_classes) # viridis Spectral
-                            # print("cmap ", cmap)
-                            print("colors", colors)
-
-                            # Get multiple qualitative colormaps
-                            cmaps = ['tab20b', 'tab20c', 'Set1', 'Set3', 'Dark2', 'Accent']
-
-                            # Combine colormaps to create a new colormap
-                            num_colors = num_classes
-                            new_colors = []
-                            print("cmap size", len(cmaps))
-                            for cmap in cmaps:
-                                base_cmap = plt.get_cmap(cmap)
-                                new_colors.extend(base_cmap(np.arange(base_cmap.N)))
-                                # new_colors.extend(base_cmap(np.linspace(0, 1, num_colors // len(cmaps))))
-
-                            # Trim the colormap to have the desired number of colors
-                            cmap = ListedColormap(new_colors[:num_colors], name='custom_cmap', N=num_colors)
-
-
-                            labelColorMapping = {}
-                            for i, label in enumerate(labels):
-                                if label not in labelColorMapping:
-                                    # print("label color, ", label, colors[i], i)
-                                    labelColorMapping[label] = colors[i]
-                            i = 0
-                            for label, color in labelColorMapping.items():
-                                # print("label color", label, color)
-                                # print("colors==color", colors==color)
-                                # print("colorsingle", np.where(unique_classes == color))
-                                tempColors = colors[(colors==color).reshape(-1)]
-                                tempX = ed[(colors==color).reshape(-1),:]
-                                tempLabels = labels[(labels==label)]
-                                # print("tempX size", tempX.size)
-                                # print("tempColors size", tempColors.size)
-                                # print("tempLabels size", tempLabels.size)
-                                # print("color, ", color.size, color, color[0])
-                                colorSingle = cmap(np.where(unique_classes == color))
-                                # print("colorSingle ", colorSingle, color)
-                                colorPrint = np.full((tempX[:,0].shape[0],4), colorSingle)
-                                if (tempX.size > 0):
-                                    ax.scatter(tempX[:,0], tempX[:,1], tempX[:,2], c=colorPrint, label=label)
-                                # ax.scatter(tempX[:,0], tempX[:,1], tempX[:,2], label=label)
-                                classSizes[i] = tempX.size
-                                i += 1
-                            plt.legend(ncol=num_classes/25, fontsize="4")
-
-                            # legend_entries = {}
-                            # # Create the scatter plot with unique labels and their respective colors
-                            # for i, label in enumerate(labels):
-                            #     if label not in legend_entries:
-                            #         legend_entries[label] = ax.scatter(ed[i,0], ed[i,1], ed[i,2], c=colors[i], label=label, cmap=plt.cm.Spectral)
-                            #     else:
-                            #         ax.scatter(ed[i,0], ed[i,1], ed[i,2], c=colors[i], cmap=plt.cm.Spectral)
-                            # # Create a custom legend based on the unique labels and colors
-                            # handles = [legend_entries[label] for label in legend_entries]
-                            # plt.legend(handles=handles)
-                            
-                            
-                            # ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral, label=labels)
-                            # plt.legend(loc='upper left')
-                    # ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral)
-            else:
-                ax.scatter(ed[:,0], ed[:,1], ed[:,2])
+            fill_graph(ax, ed)
             ax.axis('off')
             ax.set_title('3D embedding')
 
             results_saver(D)
             plt.show()
-            
-            if qml_params['colorfile']!=False:
-                score = silhouette_score(ed, colors)
-                print("silhouette score: ", score)
-                scores = np.zeros(unique_classes.shape)
-                i = 0
-                # colors = colors.reshape(-1)
-                # print("colors", colors, colors.shape)
-                # print("unique classes", unique_classes)
-                for i, clas in enumerate(unique_classes):
-                    # print("clas", clas)
-                    # tempColor = labelColorMapping[clas]
-                    tempColors = np.ones(colors.shape) * 2
-                    tempColors[colors == clas] = 1
-                    # tempColors = tempColors.reshape((tempColors.size, 1))
-                    # print("tempcolors", tempColors, tempColors.shape)
-                    scores[i] = silhouette_score(ed, tempColors)
-                # print("class sizes", classSizes.flatten())
-                indices = np.argsort(classSizes.flatten())
-                # print("indices", indices)
-                print("class sizes", classSizes[indices].flatten())
-                scores = scores[indices]
-                np.set_printoptions(precision=4)
-                print("single class silhouette scores", scores)
-
 
         np.savetxt("{}.csv".format(sys.argv[1]), ed, delimiter=",")
-
         ###### Visualizing Propagations: 
         resize = .125
         SHAPE = (int(resize*720),int(resize*819)) # teapot image shape
