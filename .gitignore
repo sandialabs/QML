@@ -1,3 +1,6 @@
 .DS_Store
 *.pickle
-
+QML_teapot_input.dat.csv
+QML_teapot_input.dat.out
+__pycache__/
+euclidian_matrix.txt
