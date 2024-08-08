@@ -82,7 +82,8 @@ def main():
 	for dataset_index, matrix in enumerate(all_matrices_condensed):
 		filename = f'teapot_resized{ dataset_index + 1 :02d}.pickle'
 		with open(filename, 'wb') as file:
-			pickle.dump(matrix,file)
+			pass
+			#pickle.dump(matrix,file)
 
 	return all_matrices_condensed
 

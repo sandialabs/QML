@@ -31,16 +31,23 @@ def dists_to_colors(dists, num_colors=10, make_int=False):
     return [c + 1 for c in colors]
 
 
+def tuple_string_to_int(s):
+    values = s.split(',')
+    values[0] = values[0].split('(')[1]
+    values[2] = values[2].split(')')[0]
+    return tuple(int(v) for v in values)
+
 if __name__ == '__main__':
     MAX = 90;
     ANG_PER_DIM = 10;
     inc = MAX/ANG_PER_DIM
 
+    with open('angle_orders.txt', 'r') as f:
+        angles = [tuple_string_to_int(s) for s in f.readlines()]
+
     distances = []
-    for x in range(ANG_PER_DIM):
-        for y in range(ANG_PER_DIM):
-            for z in range(ANG_PER_DIM):
-                distances.append(sqrt(x*x + y*y + z*z))
+    for x,y,z in angles:
+        distances.append(sqrt(x*x + y*y + z*z))
 
     print(min(distances), max(distances))
     print(np.std(distances))

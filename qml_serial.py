@@ -30,9 +30,11 @@ import matplotlib.cm as cm
 import igraph as ig
 import scipy as sp
 from sklearn.metrics import silhouette_score
+from math import sqrt
 
 from qml_serial_analyze import visualize_propagations
 from qml_serial_preprocess import initialize, read_in_matrix
+from hover import enable_hover
 
 # np.set_printoptions(threshold=sys.maxsize)
 
@@ -839,9 +841,9 @@ def fill_graph(ax, ed, do_score=False):
             raise Exception("Cannot open color file")
         else:
             if num_dim == 2:
-                ax.scatter(ed[:,0], ed[:,1], c=colors, cmap=plt.cm.Spectral)
+                sc = ax.scatter(ed[:,0], ed[:,1], c=colors, cmap=plt.cm.Spectral)
             elif num_dim == 3:
-                ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral)
+                sc = ax.scatter(ed[:,0], ed[:,1], ed[:,2], c=colors, cmap=plt.cm.Spectral)
         
             if do_score:
                 score = silhouette_score(ed, colors)
@@ -941,7 +943,7 @@ def fill_graph(ax, ed, do_score=False):
                     # print("colorSingle ", colorSingle, color)
                     colorPrint = np.full((tempX[:,0].shape[0],4), colorSingle)
                     if (tempX.size > 0):
-                        ax.scatter(tempX[:,0], tempX[:,1], tempX[:,2], c=colorPrint, label=label)
+                        sc = ax.scatter(tempX[:,0], tempX[:,1], tempX[:,2], c=colorPrint, label=label)
                     # ax.scatter(tempX[:,0], tempX[:,1], tempX[:,2], label=label)
                     classSizes[i] = tempX.size
                     i += 1
@@ -962,9 +964,10 @@ def fill_graph(ax, ed, do_score=False):
                 # plt.legend(loc='upper left')
         else:
             if num_dim == 2:
-                ax.scatter(ed[:,0], ed[:,1])
+                sc = ax.scatter(ed[:,0], ed[:,1])
             elif num_dim == 3:
-                ax.scatter(ed[:,0], ed[:,1], ed[:,2])
+                sc = ax.scatter(ed[:,0], ed[:,1], ed[:,2])
+    return sc
 
 
 # ------------------------------------
@@ -1055,10 +1058,15 @@ if __name__ == '__main__':
             ed = np.array(lyout2d.coords)
             #ig.plot(g, layout=lyout2d, target=ax, edge_width=0)
 
-            fill_graph(ax, ed)
+            sc = fill_graph(ax, ed)
             ax.axis('off')
             ax.set_title('2D embedding')
             results_saver(D)
+
+            with open('data/teapot/angle_orders.txt', 'r') as f:
+                hover_data = f.readlines()
+            enable_hover(hover_data, fig, ax, sc)
+
             plt.show()
 
         if qml_params['SHOW_EMBEDDING']==3:

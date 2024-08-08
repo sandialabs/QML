@@ -15,5 +15,5 @@
 "colorfile": "data/teapot/teapot_colors_10.pickle",
 "H_test": "False",
 "H_test_avg": 10,
-"SHOW_EMBEDDING": "3d"
+"SHOW_EMBEDDING": "2d"
 }

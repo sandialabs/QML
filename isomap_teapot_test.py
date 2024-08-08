@@ -7,7 +7,7 @@ from math import sqrt
 with open('data/teapot/teapot_resized02.pickle', 'rb') as f:
     points = pickle.load(f)
 
-with open('data/teapot/teapot_colors_mpl.pickle', 'rb') as f:
+with open('data/teapot/teapot_colors_10.pickle', 'rb') as f:
     colors = pickle.load(f)
 
 
@@ -21,4 +21,8 @@ for x in range(ANG_PER_DIM):
         for z in range(ANG_PER_DIM):
             distances.append(sqrt(x*x + y*y + z*z))
 
-get_isomap(points, distances, title='Teapot 2D Isomap, neighbors=12')
+names = ['unnamed']*len(points)
+with open('data/teapot/angle_orders.txt', 'r') as f:
+    names = f.readlines()
+
+get_isomap(points, colors, title='Teapot 2D Isomap, neighbors=12', hover_data=names)
