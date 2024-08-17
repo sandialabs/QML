@@ -477,6 +477,7 @@ def run(qml_params):
     try:
         # x = np.genfromtxt(qml_params['datafile'], delimiter=',')
         x = read_in_matrix(qml_params['datafile'], verbose)
+        what_is_time()
     except:
         print("Cannot open data file: " + qml_params['datafile'] + "... Exiting.")
         raise Exception("Cannot open data file")
@@ -544,6 +545,7 @@ def run(qml_params):
         Us = D_normalizer @ Udt @ (D_normalizer_inv)
         print(Us.shape)
         print(Us)
+        what_is_time()
 
 # Propagate
         # container to store destination points after propagation
@@ -557,6 +559,7 @@ def run(qml_params):
             for pt in range(Npts):
                 peak_idxs[pt] = propagate(pt, qml_params, h, Npts, Us, x, k)
 
+        what_is_time()
 
 # Fill in geodesic distance matrix
         # container for geodesic distances
@@ -575,6 +578,7 @@ def run(qml_params):
             D[pt,pt]=0
 
 
+        what_is_time()
         # output time taken
         e_time = time.time()
         print(f"QML Done. Time taken = {e_time-s_time}")
@@ -970,6 +974,23 @@ def fill_graph(ax, ed, do_score=False):
     return sc
 
 
+num_timestamps = 0
+prev_time = None
+def what_is_time():
+    global num_timestamps
+    global prev_time
+    num_timestamps += 1
+    curr_time = time.time()
+    timestamp = f'{num_timestamps}: {curr_time}'
+    print(timestamp)
+
+    mode = 'a' if num_timestamps > 1 else 'w'
+    gain = '' if num_timestamps == 1 else str(curr_time - prev_time)
+    prev_time = curr_time
+
+    with open('timestamps.txt', mode) as f:
+        f.write(timestamp + ', +' + gain + '\n')
+
 # ------------------------------------
 # main
 # ------------------------------------
@@ -993,11 +1014,13 @@ if __name__ == '__main__':
     except:
         print("Cannot open input file: " + sys.argv[1] + "... Exiting.")
     else:
+        what_is_time()
         data = f.read()
         inp = json.loads(data)
 
         # initialize qml_params
         qml_params = initialize(inp)
+        what_is_time()
 
         print(qml_params)
         print('\n')
@@ -1014,6 +1037,7 @@ if __name__ == '__main__':
 
         # if H_test is set, perform it
         if qml_params['H_test']:
+            what_is_time()
             print("Performing Hamiltonian test ...")
             vals = perform_hamiltonian_test(qml_params)
 
@@ -1021,10 +1045,12 @@ if __name__ == '__main__':
             qml_params['logepsilon'] = vals['logepsilon']
             qml_params['alpha'] = vals['logepsilon']/vals['logh'] - 2
             print( 'Using log(eps)={}, log(h)={}, alpha={}'.format(qml_params['logepsilon'], vals['logh'], qml_params['alpha']))
+            what_is_time()
 
         # run QML
         D, peak_idxs, x, k, norms = run(qml_params)
         print(k.shape)
+        what_is_time()
 
 
         ### SAVING QML RESULTS
@@ -1048,6 +1074,7 @@ if __name__ == '__main__':
         ###### DONE SAVING: CAN BE ANALYZED SEPARATELY USING qml_serial_analyze.py
 
 
+        what_is_time()
         if qml_params['SHOW_EMBEDDING']==2:
             print("Computing 2D embedding using geodesic distance matrix ...")
             g = ig.Graph.Weighted_Adjacency(D)
@@ -1087,6 +1114,7 @@ if __name__ == '__main__':
             results_saver(D)
             plt.show()
 
+        what_is_time()
         np.savetxt("{}.csv".format(sys.argv[1]), ed, delimiter=",")
         ###### Visualizing Propagations: 
         resize = .125
@@ -1095,6 +1123,7 @@ if __name__ == '__main__':
             f.write(f'{SHAPE[0]}\n{SHAPE[1]}')
         visualize_propagations(original_x, peak_idxs, qml_params['nProp'], qml_params['nColl'], START_IDX=3, SHAPE=SHAPE)
         print(f'Saved data to {LOG_PATH}')
+        what_is_time()
        
         
         # components = g.connected_components(mode='weak')

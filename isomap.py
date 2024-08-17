@@ -6,7 +6,8 @@ from hover import enable_hover
 
 def add_2d_scatter(ax, points, points_color, title=None):
     x, y = points.T
-    sc = ax.scatter(x, y, c=points_color, s=50, alpha=0.8, cmap='magma')
+    #sc = ax.scatter(x, y, c=points_color, s=50, alpha=0.8, cmap='magma')
+    sc = ax.scatter(x, y, c=points_color, s=50, alpha=0.8, cmap=plt.cm.Spectral)
     ax.set_title(title)
     ax.xaxis.set_major_formatter(ticker.NullFormatter())
     ax.yaxis.set_major_formatter(ticker.NullFormatter())
