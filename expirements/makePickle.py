@@ -50,55 +50,60 @@ def read_mnist_labels(filename):
 # filename = 'panda.pickle'
 # matrix.to_pickle(filename)
 
-# sklearn swiss roll
-X, color = sk.datasets.make_swiss_roll(2000, random_state=10)
-matrix = np.array(X)
-minX = np.min(matrix[:,0])
-minY = np.min(matrix[:,1])
-minZ = np.min(matrix[:,2])
-matrix[:,0] -= minX
-matrix[:,1] -= minY
-matrix[:,2] -= minZ
-maxX = np.max(matrix[:,0])
-maxY = np.max(matrix[:,1])
-maxZ = np.max(matrix[:,2])
-matrix[:,0] /= maxX
-matrix[:,1] /= maxY
-matrix[:,2] /= maxZ
-# matrix[:,1] /= 10
 
-# print("start",matrix)
+
+
+# # sklearn swiss roll
+# X, color = sk.datasets.make_swiss_roll(1000, random_state=10)
+# matrix = np.array(X)
+# minX = np.min(matrix[:,0])
+# minY = np.min(matrix[:,1])
+# minZ = np.min(matrix[:,2])
+# matrix[:,0] -= minX
+# matrix[:,1] -= minY
+# matrix[:,2] -= minZ
+# maxX = np.max(matrix[:,0])
+# maxY = np.max(matrix[:,1])
+# maxZ = np.max(matrix[:,2])
+# matrix[:,0] /= maxX
+# matrix[:,1] /= maxY
+# matrix[:,2] /= maxZ
+# # matrix[:,1] /= 10
+
+# # print("start",matrix)
+# # print(color)
+# # #sorting
+# # sortMat = np.zeros([matrix.shape[0],matrix.shape[1]+1])
+# # sortMat[:,0] = color
+# # sortMat[:,1:sortMat.shape[1]] = matrix
+# # print("sort", sortMat)
+# # np.sort(sortMat, axis=0)
+# # sortMat = matrix[color.argsort(),:]
+# # print("sorted",sortMat)
+# matrix = matrix[color.argsort(),:]
+# color = np.sort(color)
+
+# from sklearn.neighbors import NearestNeighbors
+# neigh = NearestNeighbors(n_neighbors=10)
+# neigh.fit(matrix)
+# print(neigh.kneighbors(matrix))
+# print(matrix)
 # print(color)
-# #sorting
-# sortMat = np.zeros([matrix.shape[0],matrix.shape[1]+1])
-# sortMat[:,0] = color
-# sortMat[:,1:sortMat.shape[1]] = matrix
-# print("sort", sortMat)
-# np.sort(sortMat, axis=0)
-# sortMat = matrix[color.argsort(),:]
-# print("sorted",sortMat)
-matrix = matrix[color.argsort(),:]
-color = np.sort(color)
-
-from sklearn.neighbors import NearestNeighbors
-neigh = NearestNeighbors(n_neighbors=10)
-neigh.fit(matrix)
-print(neigh.kneighbors(matrix))
-print(matrix)
-print(color)
 
 
-filename = 'swiss2000.pickle'
-with open(filename, 'wb') as file:
-    pickle.dump(matrix,file)
-filename = 'swiss2000Colored.pickle'
-with open(filename, 'wb') as file:
-    pickle.dump(color,file)
+# filename = 'swiss1000.pickle'
+# with open(filename, 'wb') as file:
+#     pickle.dump(matrix,file)
+# filename = 'swiss1000Colored.pickle'
+# with open(filename, 'wb') as file:
+#     pickle.dump(color,file)
 
-fig = plt.figure(figsize=(8,6))
-ax = fig.add_subplot(111,projection='3d')
-ax.scatter(matrix[:,0], matrix[:,1], matrix[:,2], c=color, cmap=plt.cm.Spectral)
-plt.show()
+# fig = plt.figure(figsize=(8,6))
+# ax = fig.add_subplot(111,projection='3d')
+# ax.scatter(matrix[:,0], matrix[:,1], matrix[:,2], c=color, cmap=plt.cm.Spectral)
+# plt.show()
+
+
 
 
 # # sklearn mnist
@@ -216,3 +221,30 @@ plt.show()
 # filename = 'treeDataColored.pickle'
 # with open(filename, 'wb') as file:
 #     pickle.dump(colors,file)
+
+
+
+
+# circle example
+
+# evently spaced
+numPoints = 100
+matrix = np.zeros((numPoints,2))
+color = np.zeros((numPoints,1))
+for i in range(numPoints):
+    angle = i / numPoints * 2 * np.pi
+    matrix[i,0] = np.cos(angle)
+    matrix[i,1] = np.sin(angle)
+    color[i] = angle
+
+filename = 'circle100.pickle'
+with open(filename, 'wb') as file:
+    pickle.dump(matrix,file)
+filename = 'circle100Colored.pickle'
+with open(filename, 'wb') as file:
+    pickle.dump(color,file)
+
+fig = plt.figure(figsize=(8,6))
+ax = fig.add_subplot(111)
+ax.scatter(matrix[:,0], matrix[:,1], c=color, cmap=plt.cm.Spectral)
+plt.show()

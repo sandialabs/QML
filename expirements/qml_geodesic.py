@@ -268,6 +268,65 @@ def PCA_for_ts(data, pt, no_dims):
 
     return mappedX, mapping
 
+def getU_TriMesh(x, k, dt, epsilon, verbose=0, trunc=0 ):
+    V = x
+    PCT = pp3d.PointCloudLocalTriangulation(V, with_degeneracy_heuristic=True)
+    mesh = PCT.get_local_triangulation()
+    F = np.zeros((0,3), dtype=np.int32)
+    for i in range(mesh.shape[0]):
+        for j in range(mesh.shape[1]):
+            if (mesh[i,j,0] != -1):
+                F = np.append(F, [mesh[i,j,:]], axis=0)
+                print(i, j, [mesh[i,j,:]]) # F 
+    print("V ", V)
+    print("F ", F.dtype, F)
+    L = pp3d.cotan_laplacian(V, F, denom_eps=1e-6)
+    print("L ", L.dtype, L.shape, L)
+    L = L.toarray()
+    print("L ", L.dtype, L.shape, L, np.count_nonzero(np.count_nonzero(L)))
+    M = L
+    L = np.exp( np.divide(k, -epsilon) )
+    print("L ", L.dtype, L.shape, L, np.matrix(L).sum(0))
+
+    # normalization
+    D = np.matrix(L).sum(1)
+    one_over_D = sp.sparse.diags(1/np.squeeze(np.asarray(D)), format="csc")
+    La = one_over_D @ L @ one_over_D
+
+    # second normalization to recover Markov operator
+    Da = np.matrix(La).sum(1)
+    D_normalizer = sp.sparse.diags(np.asarray(np.transpose(np.sqrt(1/Da)))[0], format="csc")
+    M = D_normalizer @ La @ D_normalizer
+    print("D", D, np.count_nonzero(D))
+    print("La", La)
+    print("Da", Da)
+
+    if verbose>0:
+        print("Eigendecomposition")
+
+    w, v = sp.linalg.eig(M)
+    idx = np.argsort(w) # sorted in ascending order
+    idx = idx[::-1] # reverse order to get descending eigenvalues
+    w = np.real(w[idx])
+    v = v[:,idx]
+    v_inv = v.conj().T
+
+    if trunc>0:
+        print("Doing spectral truncation to", trunc )
+        wt = w[:trunc]
+        vt = v[:,:trunc]
+        v_invt = v_inv[:trunc,:]
+
+        M_new = sp.sparse.diags( np.exp( 1j*dt*np.real(np.sqrt((4*(1-wt))/epsilon)) ) )
+
+        Udt = vt @ M_new @ v_invt
+    else:
+        M_new = sp.sparse.diags( np.exp( 1j*dt*np.real(np.sqrt((4*np.abs(1-w))/epsilon)) ), format="csc" )
+
+        Udt = v @ M_new @ v_inv
+
+    return Udt, D_normalizer
+
 
 def qmaniGetU_nnGL( k, dt, epsilon, verbose=0, trunc=0 ):
     """
@@ -285,6 +344,7 @@ def qmaniGetU_nnGL( k, dt, epsilon, verbose=0, trunc=0 ):
     """
     if verbose>0:
         print("Construct graph Laplacian")
+
 
     L = np.exp( np.divide(k, -epsilon) )
     # normalization
@@ -670,6 +730,19 @@ def run(qml_params):
         # Npts is the number of data points
         Npts = np.shape(x)[0]
 
+        # # compute Euclidean squared distance matrix, modified to be from heat
+        # P = x
+        # solver = pp3d.PointCloudHeatSolver(P)
+        # triangulator = pp3d.PointCloudLocalTriangulation(P)
+        # triangulation = triangulator.get_local_triangulation()
+        # print("triangulation", triangulation)
+        # pointsInTraing = np.unique(triangulation)
+        # print("triang point count", pointsInTraing.shape)
+        # quit()
+        # # Compute the geodesic distance to point 4
+        # k = np.zeros((Npts,Npts))
+        # for i in range(Npts):
+        #     k[i,:] = np.asarray(solver.compute_distance(i))
         # compute Euclidean squared distance matrix
         k = spatial.distance.squareform(spatial.distance.pdist(x, 'sqeuclidean'))
 
@@ -724,7 +797,8 @@ def run(qml_params):
 
 # QPROP
         # compute quantum propagator
-        Udt, D_normalizer = qmaniGetU_nnGL( k, dt, epsilon, verbose, trunc=0 )
+        # Udt, D_normalizer = qmaniGetU_nnGL( k, dt, epsilon, verbose, trunc=0 )
+        Udt, D_normalizer = getU_TriMesh(x, k, dt, epsilon, verbose, trunc=0 )
         D_normalizer_inv = spinv(D_normalizer)
         Us = D_normalizer @ Udt @ (D_normalizer_inv)
 
@@ -816,48 +890,51 @@ def run(qml_params):
         print("heat", dists, dists.shape)
         for i in range(count):
             distances[i,2] = dists[ids[i,0]]
+            
 
 
-        # Djikstra distances
-        k = 7
-        graphList = []
-        closest_points = []
-        for i, point in enumerate(x):
-            closest_points.append(find_closest_points(x, point, k))
-        # Create an empty graph
-        for j in range(5,k):
-            print("g ", j)
-            G = nx.Graph()
-            # Loop over the initial matrix
-            for i, point in enumerate(x):
-                count0 = 0
-                for index, distance in closest_points[i]:
-                    if (count0 < j):
-                        # print(index, distance, i)
-                        G.add_edge(i, index, weight=distance)
-                        count0 += 1
-                    else:
-                        break
-            graphList.append(G)
-        # print(G)
-        # print(ids)
-        # print(G.edges())
-        # print(max(nx.connected_components(G),key=len))
-        dijDists = np.zeros((count,k-5))
-        dijError = np.zeros((k-5,1))
-        for j in range(0,k-5):
-            print("p ", j)
-            for i in range(count):
-                try:
-                    shortest_path_indices = nx.shortest_path(graphList[j], source=0, target=ids[i,0])
-                    dijDists[i,j] = sum(graphList[j][u][v]['weight'] for u, v in zip(shortest_path_indices, shortest_path_indices[1:]))
-                except:
-                    dijDists[i,j] = 9999999999999
-            dijError[j] = np.linalg.norm(dijDists[:,j] - distances[:,1])
-        dijBestK = np.argmin(dijError)
-        print("dif error ", dijError)
-        print("best k ", dijBestK)
-        distances[:,3] = dijDists[:,dijBestK]
+        # # Djikstra distances
+        # k = 7
+        # graphList = []
+        # closest_points = []
+        # for i, point in enumerate(x):
+        #     closest_points.append(find_closest_points(x, point, k))
+        # # Create an empty graph
+        # for j in range(5,k):
+        #     print("g ", j)
+        #     G = nx.Graph()
+        #     # Loop over the initial matrix
+        #     for i, point in enumerate(x):
+        #         count0 = 0
+        #         for index, distance in closest_points[i]:
+        #             if (count0 < j):
+        #                 # print(index, distance, i)
+        #                 G.add_edge(i, index, weight=distance)
+        #                 count0 += 1
+        #             else:
+        #                 break
+        #     graphList.append(G)
+        # # print(G)
+        # # print(ids)
+        # # print(G.edges())
+        # # print(max(nx.connected_components(G),key=len))
+        # dijDists = np.zeros((count,k-5))
+        # dijError = np.zeros((k-5,1))
+        # for j in range(0,k-5):
+        #     print("p ", j)
+        #     for i in range(count):
+        #         try:
+        #             shortest_path_indices = nx.shortest_path(graphList[j], source=0, target=ids[i,0])
+        #             dijDists[i,j] = sum(graphList[j][u][v]['weight'] for u, v in zip(shortest_path_indices, shortest_path_indices[1:]))
+        #         except:
+        #             dijDists[i,j] = 9999999999999
+        #     dijError[j] = np.linalg.norm(dijDists[:,j] - distances[:,1])
+        # dijBestK = np.argmin(dijError)
+        # print("dif error ", dijError)
+        # print("best k ", dijBestK)
+        # distances[:,3] = dijDists[:,dijBestK]
+
+
         return ids, distances, xScale
 
 def get_hamiltonian(k, epsilon):
@@ -918,7 +995,6 @@ def perform_hamiltonian_test(qml_params):
         # Npts is the number of data points
         Npts = np.shape(x)[0]
 
-        # compute Euclidean squared distance matrix
         k = spatial.distance.squareform(spatial.distance.pdist(x, 'sqeuclidean'))
 
         # container for storing devitations/errors
@@ -1116,7 +1192,7 @@ if __name__ == '__main__':
         ax[0].set_ylabel("Geodesic Distance")
         ax[1].set_xlabel("Ground truth distance")
         ax[1].set_ylabel("Difference in distance")
-        # ax[1].set_yscale("log")
+        ax[1].set_yscale("log")
 
         plt.show()
 
